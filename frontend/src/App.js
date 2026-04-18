@@ -16,6 +16,7 @@ import Wishlist from "./pages/Wishlist";
 import HostListings from "./pages/HostListings";
 import Account from "./pages/Account";
 import TenantRoomSharing from "./pages/TenantRoomSharing";
+import SmartSwipeRoommates from "./pages/SmartSwipeRoommates";
 import Help from "./pages/Help";
 import BecomeHost from "./pages/BecomeHost";
 import About from "./pages/About";
@@ -38,6 +39,7 @@ import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 // Import ScrollToTop component
 import ScrollToTop from "./components/ScrollToTop";
+import TawkChat from "./components/TawkChat";
 // Import Loading Screen
 import LoadingScreen from "./pages/Loading_Screen";
 // Context providers
@@ -107,6 +109,7 @@ function App() {
       <AuthProvider>
         {/* Browser router for handling navigation */}
         <BrowserRouter>
+          <TawkChat />
           {/* Add ScrollToTop to handle scrolling on route changes */}
           <ScrollToTop />
           {/* Global layout component (header, footer, etc.) */}
@@ -207,6 +210,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <TenantRoomSharing />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tenant/swipe-matching"
+                element={
+                  <ProtectedRoute>
+                    <SmartSwipeRoommates />
                   </ProtectedRoute>
                 }
               />

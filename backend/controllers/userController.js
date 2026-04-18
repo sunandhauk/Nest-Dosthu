@@ -47,12 +47,16 @@ const generateUniqueUsername = async (email, firstName, lastName) => {
   return candidate;
 };
 
+const normalizeRequestedRole = (role) => (role === "host" ? "host" : "user");
+const DEMO_HOST_EMAIL = "host@smartrent.com";
+
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res, refreshToken) => {
+  const isProduction = process.env.NODE_ENV === "production";
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/", // Cookie available for all routes
   });
@@ -75,6 +79,7 @@ const registerUser = async (req, res) => {
       password,
       firstName,
       lastName,
+      role,
       phone,
       referralCode,
     } = value;
@@ -93,6 +98,7 @@ const registerUser = async (req, res) => {
       password,
       firstName,
       lastName,
+      role: normalizeRequestedRole(role),
       phone,
     });
 
@@ -158,15 +164,49 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getDemoHostUser = async (req, res) => {
+  try {
+    let demoHost = await User.findOne({ email: DEMO_HOST_EMAIL });
+
+    if (!demoHost) {
+      demoHost = await User.create({
+        username: "smartrenthost",
+        email: DEMO_HOST_EMAIL,
+        password: crypto.randomBytes(24).toString("hex"),
+        firstName: "Smart Rent",
+        lastName: "Host",
+        role: "host",
+        authProvider: "local",
+        phone: "9876543210",
+      });
+    }
+
+    return res.status(200).json({
+      _id: demoHost._id,
+      username: demoHost.username,
+      firstName: demoHost.firstName,
+      lastName: demoHost.lastName,
+      role: demoHost.role,
+      phone: demoHost.phone,
+      profileImage: demoHost.profileImage,
+    });
+  } catch (error) {
+    console.error("Demo host lookup error:", error);
+    return res.status(500).json({ message: "Unable to load demo host" });
+  }
+};
+
 const googleAuth = async (req, res) => {
   try {
-    const { code, redirectUri } = req.body;
+    const { code, redirectUri, role } = req.body;
 
     if (!code || !redirectUri) {
       return res.status(400).json({
         message: "Google authorization code and redirect URI are required",
       });
     }
+
+    const requestedRole = normalizeRequestedRole(role);
 
     const googleProfile = await exchangeCodeForGoogleProfile({
       code,
@@ -212,6 +252,7 @@ const googleAuth = async (req, res) => {
         password: crypto.randomBytes(32).toString("hex"),
         firstName,
         lastName,
+        role: requestedRole,
         authProvider: "google",
         googleId: googleProfile.id,
         profileImage: googleProfile.picture,
@@ -226,6 +267,15 @@ const googleAuth = async (req, res) => {
 
       if (user.authProvider !== "google") {
         user.authProvider = "google";
+        needsSave = true;
+      }
+
+      if (
+        requestedRole === "host" &&
+        user.role !== "admin" &&
+        user.role !== "host"
+      ) {
+        user.role = "host";
         needsSave = true;
       }
 
@@ -322,6 +372,8 @@ const logoutUser = async (req, res) => {
     // Clear cookie
     res.cookie("refreshToken", "", {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       expires: new Date(0),
       path: "/",
     });
@@ -685,6 +737,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  getDemoHostUser,
   refreshAccessToken,
   logoutUser,
   getUserProfile,

@@ -7,6 +7,7 @@ const registerSchema = Joi.object({
   password: Joi.string().min(6).required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
+  role: Joi.string().valid("user", "host").default("user"),
   phone: Joi.string().allow(""),
   referralCode: Joi.string().allow(""),
 });

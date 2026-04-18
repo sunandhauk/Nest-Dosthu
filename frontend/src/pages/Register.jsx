@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useAppSettings } from "../contexts/AppSettingsContext";
 import { Eye, EyeOff } from "lucide-react";
 import { startGoogleAuth } from "../utils/googleAuth";
 
@@ -20,10 +21,12 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register, isAuthenticated, error: authError } = useAuth();
+  const { theme } = useAppSettings();
   const navigate = useNavigate();
   const location = useLocation();
   const role = new URLSearchParams(location.search).get("role") || "tenant";
   const roleLabel = role === "host" ? "Host" : "Tenant";
+  const isDark = theme === "dark";
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -68,6 +71,7 @@ const Register = () => {
         email: formData.email,
         password: formData.password,
         username: formData.username || formData.email.split("@")[0],
+        role: role === "host" ? "host" : "user",
       });
 
       if (result.success) {
@@ -87,7 +91,7 @@ const Register = () => {
     setError("");
 
     try {
-      startGoogleAuth();
+      startGoogleAuth({ role: role === "host" ? "host" : "user" });
     } catch (err) {
       setError(err.message || "Google sign-up failed. Please try again.");
       setSocialLoading("");
@@ -96,6 +100,9 @@ const Register = () => {
 
   const inputStyle =
     "w-full px-4 py-2 bg-white border-2 border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-sm";
+  const headingBadgeClass = isDark
+    ? "inline-block rounded-2xl bg-white px-4 py-2 text-2xl font-bold text-black"
+    : "inline-block rounded-2xl bg-black px-4 py-2 text-2xl font-bold text-white";
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -111,7 +118,7 @@ const Register = () => {
       <div className="relative z-10 w-full flex items-start justify-center min-h-screen pt-8">
         <div className="w-full max-w-md animate-fade-in bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-5">
           <div className="mb-3 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">{roleLabel} Sign Up</h1>
+            <h1 className={headingBadgeClass}>{roleLabel} Sign Up</h1>
             <p className="text-gray-600 text-xs">
               {role === "host" ? "Create your host account and start publishing rooms." : "Create your tenant account and start exploring rooms."}
             </p>

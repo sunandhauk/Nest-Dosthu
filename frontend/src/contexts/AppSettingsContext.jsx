@@ -91,6 +91,13 @@ export const AppSettingsProvider = ({ children }) => {
     localStorage.setItem("theme", theme);
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
+    document.documentElement.dataset.themeTransition = theme;
+
+    const timeout = window.setTimeout(() => {
+      delete document.documentElement.dataset.themeTransition;
+    }, 700);
+
+    return () => window.clearTimeout(timeout);
   }, [theme]);
 
   // Fetch exchange rates when currency changes
@@ -176,13 +183,15 @@ export const AppSettingsProvider = ({ children }) => {
       INR: "₹",
     };
 
-    // Get currency symbol for formatting
-    const currencySymbol = currencySymbols[currency] || "$";
+    // All listing prices are stored in INR in this app.
+    let convertedAmount = Number(amount);
+    if (exchangeRates && currency !== "INR") {
+      const inrRate = Number(exchangeRates.INR);
+      const targetRate = Number(exchangeRates[currency]);
 
-    // Use real exchange rates if available, otherwise use default conversion
-    let convertedAmount = amount;
-    if (exchangeRates && currency !== "USD") {
-      convertedAmount = amount * exchangeRates[currency];
+      if (inrRate > 0 && targetRate > 0) {
+        convertedAmount = (Number(amount) / inrRate) * targetRate;
+      }
     }
 
     // Format based on currency

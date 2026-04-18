@@ -11,6 +11,22 @@ dotenv.config();
 
 const app = express();
 
+const isAllowedLocalDevelopmentOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  return (
+    /^http:\/\/localhost(?::\d+)?$/i.test(origin) ||
+    /^http:\/\/127\.0\.0\.1(?::\d+)?$/i.test(origin) ||
+    /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?$/i.test(origin) ||
+    /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?$/i.test(origin) ||
+    /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(?::\d+)?$/i.test(
+      origin
+    )
+  );
+};
+
 const corsOptions = {
   origin: (origin, callback) => {
     console.log("CORS Origin:", origin);
@@ -19,7 +35,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Allow ALL localhost ports
-    if (origin.startsWith("http://localhost")) {
+    if (isAllowedLocalDevelopmentOrigin(origin)) {
       return callback(null, true);
     }
 

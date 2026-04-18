@@ -5,6 +5,8 @@ const Property = require("./models/property");
 
 dotenv.config();
 
+const normalizeRoomPrice = (price) => Math.min(4000, Math.max(3000, price));
+
 const sampleProperties = [
   {
     title: "Women's PG in Velachery",
@@ -13,7 +15,7 @@ const sampleProperties = [
     category: "PG",
     listingType: "pg",
     tenantPreference: "women",
-    price: 8500,
+    price: normalizeRoomPrice(3850),
     location: {
       address: "12, Taramani Link Road",
       city: "Chennai",
@@ -55,7 +57,7 @@ const sampleProperties = [
     category: "Hostel",
     listingType: "hostel",
     tenantPreference: "women",
-    price: 7000,
+    price: normalizeRoomPrice(3400),
     location: {
       address: "44, LB Road",
       city: "Chennai",
@@ -97,7 +99,7 @@ const sampleProperties = [
     category: "Room",
     listingType: "private-room",
     tenantPreference: "students",
-    price: 6000,
+    price: normalizeRoomPrice(3200),
     location: {
       address: "8, GST Road",
       city: "Chennai",
@@ -138,7 +140,7 @@ const sampleProperties = [
     category: "PG",
     listingType: "shared-room",
     tenantPreference: "men",
-    price: 5500,
+    price: normalizeRoomPrice(3000),
     location: {
       address: "101, Rajiv Gandhi Salai",
       city: "Chennai",

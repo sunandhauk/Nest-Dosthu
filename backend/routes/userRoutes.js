@@ -7,13 +7,14 @@ const { upload } = require("../cloudConfig");
 // Public routes
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
+router.get("/demo-host", userController.getDemoHostUser);
 router.post("/google", userController.googleAuth);
 router.post("/forgot-password", userController.forgotPassword);
 router.post("/reset-password/:token", userController.resetPassword);
 router.post("/refresh", userController.refreshAccessToken);
 
 // Protected routes
-router.post("/logout", authenticate, userController.logoutUser);
+router.post("/logout", userController.logoutUser);
 router.get("/profile", authenticate, userController.getUserProfile);
 router.put("/profile", authenticate, userController.updateUserProfile);
 router.put("/password", authenticate, userController.updatePassword);

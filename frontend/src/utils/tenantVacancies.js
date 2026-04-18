@@ -18,11 +18,18 @@ const defaultPreferences = {
   drinking: "No preference",
   cleanliness: "Clean and hygienic habits",
   sleepSchedule: "",
+  interests: "",
   other: "",
 };
 
 export const createEmptyVacancyForm = (currentUser) => ({
   id: null,
+  ownerId: currentUser?._id || "",
+  ownerName:
+    [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(" ").trim() ||
+    currentUser?.username ||
+    "",
+  ownerRole: currentUser?.role || "user",
   propertyType: "PG",
   roomType: "Triple Sharing",
   location: "",
@@ -66,6 +73,9 @@ const normalizePhoto = (photo, index) => {
 export const normalizeVacancyListing = (listing = {}) => ({
   ...listing,
   id: String(listing.id || Date.now()),
+  ownerId: listing.ownerId || "",
+  ownerName: listing.ownerName || "",
+  ownerRole: listing.ownerRole || "user",
   propertyType: listing.propertyType || "PG",
   roomType: listing.roomType || "Triple Sharing",
   location: listing.location || "",

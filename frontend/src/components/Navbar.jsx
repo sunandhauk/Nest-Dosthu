@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import { useAppSettings } from "../contexts/AppSettingsContext";
 import { useAuth } from "../contexts/AuthContext";
 import NavLogo from "./navbar/NavLogo";
-import NavSearch from "./navbar/NavSearch";
-import NavProfile from "./navbar/NavProfile";
-import NavSettings from "./navbar/NavSettings";
 import { getPreferenceSnapshot } from "../utils/tenantVacancies";
 
 const UserAvatar = ({ user, sizeClass = "w-8 h-8", textClass = "text-sm" }) => {
@@ -42,13 +40,13 @@ const ThemeToggle = ({ theme, onToggle, compact = false }) => {
     <button
       type="button"
       onClick={onToggle}
-      className={`relative inline-flex items-center rounded-full border border-violet-200 bg-[linear-gradient(135deg,rgba(237,233,254,0.95),rgba(243,232,255,0.92),rgba(255,255,255,0.98))] p-1 shadow-[0_16px_40px_-24px_rgba(124,58,237,0.65)] transition hover:shadow-[0_20px_44px_-24px_rgba(124,58,237,0.75)] dark:border-violet-400/30 dark:bg-[linear-gradient(135deg,rgba(46,16,101,0.96),rgba(88,28,135,0.92),rgba(30,41,59,0.96))] ${
-        compact ? "w-[76px]" : "w-[84px]"
+      className={`relative inline-flex items-center rounded-full border border-red-300 bg-[linear-gradient(135deg,rgba(255,237,237,0.98),rgba(254,226,226,0.96),rgba(255,255,255,0.98))] p-1 shadow-[0_14px_34px_-24px_rgba(220,38,38,0.72)] transition hover:shadow-[0_18px_38px_-22px_rgba(220,38,38,0.82)] ${
+        compact ? "w-[64px]" : "w-[72px]"
       }`}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.85),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(196,181,253,0.42),transparent_40%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(221,214,254,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,0.18),transparent_36%)]" />
+      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.9),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(252,165,165,0.3),transparent_42%)]" />
       <div className={`relative flex w-full items-center ${isDark ? "justify-start" : "justify-end"}`}>
         <motion.div
           layout
@@ -57,10 +55,10 @@ const ThemeToggle = ({ theme, onToggle, compact = false }) => {
             visualDuration: 0.2,
             bounce: 0.2,
           }}
-          className={`relative flex ${compact ? "h-10 w-10" : "h-11 w-11"} items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#faf5ff_0%,#d8b4fe_24%,#a855f7_58%,#6d28d9_100%)] text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.95)]`}
+          className={`relative flex ${compact ? "h-8 w-8" : "h-9 w-9"} items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#fca5a5_0%,#ef4444_34%,#dc2626_68%,#991b1b_100%)] text-white shadow-[0_12px_28px_-14px_rgba(220,38,38,0.95)]`}
         >
           <span className="absolute inset-[4px] rounded-full border border-white/25" />
-          <i className={`fas ${isDark ? "fa-sun" : "fa-moon"} relative z-10 text-sm`} />
+          <i className={`fas ${isDark ? "fa-sun" : "fa-moon"} relative z-10 text-xs`} />
         </motion.div>
       </div>
     </button>
@@ -71,22 +69,22 @@ const Navbar = () => {
   // State for UI controls
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isGetStartedOpen, setIsGetStartedOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(() => {
-    const saved = localStorage.getItem("recentSearches");
-    return saved ? JSON.parse(saved) : [];
-  });
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isSettingsLoading, setIsSettingsLoading] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const [preferenceSnapshot, setPreferenceSnapshot] = useState(getPreferenceSnapshot);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const searchRef = useRef(null);
+  const [profileMenuPosition, setProfileMenuPosition] = useState({ top: 0, right: 16 });
+  const [getStartedMenuPosition, setGetStartedMenuPosition] = useState({ top: 0, right: 16 });
   const settingsRef = useRef(null);
   const preferencesRef = useRef(null);
+  const preferencesPanelRef = useRef(null);
   const getStartedRef = useRef(null);
+  const getStartedButtonRef = useRef(null);
+  const getStartedMenuRef = useRef(null);
   const menuRef = useRef(null);
+  const profileButtonRef = useRef(null);
+  const profileMenuRef = useRef(null);
   const { pathname } = useLocation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,27 +128,39 @@ const Navbar = () => {
 
   // Handle clicks outside dropdown menus and keyboard navigation
   useEffect(() => {
-    // Handle clicks outside the search dropdown
+    const isInsideRef = (ref, target) => ref.current && ref.current.contains(target);
+
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchFocused(false);
-      }
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setIsSettingsMenuOpen(false);
       }
-      if (preferencesRef.current && !preferencesRef.current.contains(event.target)) {
+      if (
+        preferencesRef.current &&
+        !preferencesRef.current.contains(event.target) &&
+        (!preferencesPanelRef.current ||
+          !preferencesPanelRef.current.contains(event.target))
+      ) {
         setIsPreferencesOpen(false);
       }
-      if (getStartedRef.current && !getStartedRef.current.contains(event.target)) {
+      if (
+        getStartedRef.current &&
+        !getStartedRef.current.contains(event.target) &&
+        !isInsideRef(getStartedMenuRef, event.target)
+      ) {
         setIsGetStartedOpen(false);
+      }
+      if (
+        profileButtonRef.current &&
+        !profileButtonRef.current.contains(event.target) &&
+        !isInsideRef(profileMenuRef, event.target)
+      ) {
+        setIsProfileMenuOpen(false);
       }
     };
 
     // Handle keyboard navigation
     const handleKeyDown = (event) => {
-      // Close menus on Escape
       if (event.key === "Escape") {
-        setIsSearchFocused(false);
         setIsSettingsMenuOpen(false);
         setIsProfileMenuOpen(false);
         setIsGetStartedOpen(false);
@@ -160,13 +170,23 @@ const Navbar = () => {
       // Handle Tab key to manage focus trap in menus
       if (event.key === "Tab" && (isSettingsMenuOpen || isProfileMenuOpen || isPreferencesOpen)) {
         const menu = isSettingsMenuOpen
-          ? settingsRef.current
+          ? menuRef.current
           : isPreferencesOpen
-            ? preferencesRef.current
-            : document;
+            ? preferencesPanelRef.current
+            : null;
+
+        if (!menu) {
+          return;
+        }
+
         const focusableElements = menu.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
+
+        if (!focusableElements.length) {
+          return;
+        }
+
         const firstFocusableElement = focusableElements[0];
         const lastFocusableElement =
           focusableElements[focusableElements.length - 1];
@@ -202,8 +222,8 @@ const Navbar = () => {
 
   // Control body scrolling when settings modal is open
   useEffect(() => {
-    // Prevent body scrolling when settings modal is open
-    if (isSettingsMenuOpen) {
+    // Prevent body scrolling when modal-style overlays are open
+    if (isSettingsMenuOpen || isPreferencesOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -213,13 +233,7 @@ const Navbar = () => {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isSettingsMenuOpen]);
-
-  // Persist recent searches to localStorage
-  useEffect(() => {
-    // Save recent searches to localStorage whenever it changes
-    localStorage.setItem("recentSearches", JSON.stringify(recentSearches));
-  }, [recentSearches]);
+  }, [isPreferencesOpen, isSettingsMenuOpen]);
 
   useEffect(() => {
     const syncPreferences = () => {
@@ -236,45 +250,434 @@ const Navbar = () => {
     };
   }, []);
 
-  // Handler for search input changes
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  const getRightAlignedMenuPosition = (buttonRect, menuWidth) => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const horizontalMargin = 16;
+    const top = Math.min(buttonRect.bottom + 12, viewportHeight - 24);
+    const right = Math.max(horizontalMargin, viewportWidth - buttonRect.right);
+    const left = viewportWidth - right - menuWidth;
 
-  // Handler for search form submission
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Add to recent searches (avoid duplicates and limit to 5)
-      const updatedSearches = [
-        searchQuery.trim(),
-        ...recentSearches.filter((search) => search !== searchQuery.trim()),
-      ].slice(0, 5);
-
-      setRecentSearches(updatedSearches);
-      navigate(`/listings?location=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
-      setIsSearchFocused(false);
+    if (left < horizontalMargin) {
+      return {
+        top,
+        right: Math.max(horizontalMargin, viewportWidth - horizontalMargin - menuWidth),
+      };
     }
+
+    return { top, right };
   };
 
-  // Handler for clicking a search suggestion
-  const handleSuggestionClick = (suggestion) => {
-    // Add to recent searches
-    const updatedSearches = [
-      suggestion,
-      ...recentSearches.filter((search) => search !== suggestion),
-    ].slice(0, 5);
+  const updateProfileMenuPosition = () => {
+    if (!profileButtonRef.current) {
+      return;
+    }
 
-    setRecentSearches(updatedSearches);
-    navigate(`/listings?location=${encodeURIComponent(suggestion)}`);
-    setIsSearchFocused(false);
+    setProfileMenuPosition(
+      getRightAlignedMenuPosition(profileButtonRef.current.getBoundingClientRect(), 288)
+    );
   };
 
-  // Handler to clear all recent searches
-  const clearRecentSearches = () => {
-    setRecentSearches([]);
+  const updateGetStartedMenuPosition = () => {
+    if (!getStartedButtonRef.current) {
+      return;
+    }
+
+    setGetStartedMenuPosition(
+      getRightAlignedMenuPosition(getStartedButtonRef.current.getBoundingClientRect(), 320)
+    );
   };
+
+  useEffect(() => {
+    if (!isProfileMenuOpen && !isGetStartedOpen) {
+      return;
+    }
+
+    const handleViewportChange = () => {
+      if (isProfileMenuOpen) {
+        updateProfileMenuPosition();
+      }
+      if (isGetStartedOpen) {
+        updateGetStartedMenuPosition();
+      }
+    };
+
+    handleViewportChange();
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [isProfileMenuOpen, isGetStartedOpen]);
+
+  const preferencesContent = (
+    <div
+      className="fixed inset-0 z-[1400] flex items-start justify-center bg-black/65 p-4 pt-24 backdrop-blur-sm sm:items-center sm:pt-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preferences-modal-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          setIsPreferencesOpen(false);
+        }
+      }}
+    >
+      <div
+        ref={preferencesPanelRef}
+        className={`w-full max-w-lg max-h-[calc(100vh-3rem)] overflow-y-auto rounded-[28px] border p-5 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.48)] ${
+          theme === "dark"
+            ? "border-red-400/50 bg-black text-white"
+            : "border-orange-200/70 bg-[linear-gradient(180deg,_rgba(255,247,242,0.98)_0%,_rgba(255,235,220,0.96)_100%)] text-black"
+        }`}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p
+              id="preferences-modal-title"
+              className={`text-lg font-semibold ${theme === "dark" ? "text-white" : "text-neutral-900"}`}
+            >
+              Roommate preferences
+            </p>
+            <p className={`mt-1 text-sm ${theme === "dark" ? "text-white/80" : "text-neutral-600"}`}>
+              {isAuthenticated
+                ? "Hidden by default and pulled from your latest room-sharing draft or listing."
+                : "Preview the roommate preference fields shown in the tenant room-sharing flow."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsPreferencesOpen(false)}
+            className={`rounded-full border px-3 py-2 text-sm transition ${
+              theme === "dark"
+                ? "border-red-400/50 bg-black text-white hover:border-red-300"
+                : "border-orange-200 bg-white text-black hover:border-orange-300"
+            }`}
+            aria-label="Close preferences"
+          >
+            <i className="fas fa-times" aria-hidden="true" />
+          </button>
+        </div>
+
+        {isAuthenticated ? (
+          <>
+            <div
+              className={`space-y-3 rounded-[24px] border p-4 text-sm ${
+                theme === "dark"
+                  ? "border-red-400/30 bg-black text-white"
+                  : "border-orange-200/70 bg-white/80 text-neutral-800"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Gender preference</span>
+                <span className="max-w-[55%] break-words text-right font-medium">{preferenceSnapshot.gender}</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Occupation</span>
+                <span className="max-w-[55%] break-words text-right font-medium">
+                  {preferenceSnapshot.occupation?.length
+                    ? preferenceSnapshot.occupation.join(", ")
+                    : "Any"}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Smoking habits</span>
+                <span className="max-w-[55%] break-words text-right font-medium">{preferenceSnapshot.smoking}</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Drinking habits</span>
+                <span className="max-w-[55%] break-words text-right font-medium">{preferenceSnapshot.drinking}</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Cleanliness</span>
+                <span className="max-w-[55%] break-words text-right font-medium">{preferenceSnapshot.cleanliness}</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Interests</span>
+                <span className="max-w-[55%] break-words text-right font-medium">
+                  {preferenceSnapshot.interests || "Not specified"}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Sleep schedule</span>
+                <span className="max-w-[55%] break-words text-right font-medium">
+                  {preferenceSnapshot.sleepSchedule || "Not specified"}
+                </span>
+              </div>
+            </div>
+
+            <Link
+              to="/tenant/room-sharing"
+              className={`mt-4 inline-flex items-center rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+                theme === "dark"
+                  ? "border-red-400/50 bg-black text-white hover:border-red-300"
+                  : "border-orange-200 bg-white text-black hover:border-orange-300"
+              }`}
+              onClick={() => setIsPreferencesOpen(false)}
+            >
+              Update room-sharing preferences
+            </Link>
+          </>
+        ) : (
+          <>
+            <div
+              className={`space-y-3 rounded-[24px] border p-4 text-sm ${
+                theme === "dark"
+                  ? "border-red-400/30 bg-black text-white"
+                  : "border-orange-200/70 bg-white/80 text-neutral-800"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Gender preference</span>
+                <span className="max-w-[55%] break-words text-right font-medium">Male / Female / Any</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Occupation</span>
+                <span className="max-w-[55%] break-words text-right font-medium">Student / Working</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Smoking / Drinking</span>
+                <span className="max-w-[55%] break-words text-right font-medium">Lifestyle habits</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Cleanliness</span>
+                <span className="max-w-[55%] break-words text-right font-medium">Hygiene expectations</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Interests</span>
+                <span className="max-w-[55%] break-words text-right font-medium">Gaming, movies, fitness</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className={theme === "dark" ? "text-white/70" : "text-neutral-500"}>Other preferences</span>
+                <span className="max-w-[55%] break-words text-right font-medium">Sleep schedule and more</span>
+              </div>
+            </div>
+
+            <div
+              className={`mt-4 flex items-center justify-between gap-3 rounded-[24px] border px-4 py-4 ${
+                theme === "dark"
+                  ? "border-red-400/30 bg-black"
+                  : "border-orange-200/70 bg-white/85"
+              }`}
+            >
+              <div>
+                <p className={`text-sm font-semibold ${theme === "dark" ? "text-white" : "text-neutral-900"}`}>Tenant access</p>
+                <p className={`mt-1 text-xs ${theme === "dark" ? "text-white/70" : "text-neutral-500"}`}>
+                  Sign in as tenant to post vacancy and manage these preferences.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPreferencesOpen(false);
+                  navigate("/login?role=tenant");
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
+              >
+                Tenant Login
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const settingsMenuContent = (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50 animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-modal-title"
+    >
+      <div
+        ref={menuRef}
+        className="bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto mx-4 transform transition-all duration-300 ease-out
+          sm:max-w-xl sm:w-full"
+        style={{
+          animation: "fadeInUp 0.3s ease-out",
+          maxWidth: "min(90vw, 32rem)",
+          marginTop: Math.min(
+            menuPosition.y + 20,
+            window.innerHeight - 600
+          ),
+        }}
+      >
+        <div className="flex justify-between items-center p-4 border-b border-neutral-200 sticky top-0 bg-white z-10">
+          <h2
+            id="settings-modal-title"
+            className="text-xl font-bold text-neutral-800"
+          >
+            Language and Currency
+          </h2>
+          <div className="flex items-center">
+            <span
+              className="text-sm text-neutral-500 mr-3"
+              role="status"
+              aria-live="polite"
+            >
+              Currently: {languageName}, {currency}
+            </span>
+            <button
+              onClick={() => setIsSettingsMenuOpen(false)}
+              className="text-neutral-500 hover:text-neutral-700 p-2 rounded-full hover:bg-neutral-100 transition duration-200"
+              aria-label="Close settings"
+            >
+              <i className="fas fa-times" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 border-b border-neutral-200">
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-neutral-900">Appearance</p>
+              <p className="mt-1 text-xs text-neutral-500">
+                Switch between light and dark mode anytime.
+              </p>
+            </div>
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          </div>
+
+          <h3 className="text-lg font-semibold text-neutral-800 mb-4">
+            Select a language
+          </h3>
+
+          {isTranslating ? (
+            <div className="flex justify-center py-8">
+              <i className="fas fa-spinner fa-spin text-primary-500 mr-2 text-xl"></i>
+              <span className="text-neutral-700">
+                Loading translations...
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                <div className="font-medium text-neutral-700 mb-2">
+                  Suggested languages
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {supportedLanguages.slice(0, 6).map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() =>
+                        handleLanguageChange(lang.code, lang.name)
+                      }
+                      className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
+                        language === lang.code
+                          ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
+                          : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span>{lang.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="font-medium text-neutral-700 mb-2">
+                  All languages
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {supportedLanguages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() =>
+                        handleLanguageChange(lang.code, lang.name)
+                      }
+                      className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
+                        language === lang.code
+                          ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
+                          : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span>{lang.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-neutral-800 mb-4">
+            Select a currency
+          </h3>
+
+          {isLoadingRates ? (
+            <div className="flex justify-center py-8">
+              <i className="fas fa-spinner fa-spin text-primary-500 mr-2 text-xl"></i>
+              <span className="text-neutral-700">
+                Loading exchange rates...
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                <div className="font-medium text-neutral-700 mb-2">
+                  Popular currencies
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {currencies.slice(0, 4).map((curr) => (
+                    <button
+                      key={curr.code}
+                      onClick={() =>
+                        handleCurrencyChange(curr.code)
+                      }
+                      className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
+                        currency === curr.code
+                          ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
+                          : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span className="mr-2 font-bold">
+                        {curr.symbol}
+                      </span>
+                      <span>
+                        {curr.code} - {curr.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="font-medium text-neutral-700 mb-2">
+                  All currencies
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {currencies.map((curr) => (
+                    <button
+                      key={curr.code}
+                      onClick={() =>
+                        handleCurrencyChange(curr.code)
+                      }
+                      className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
+                        currency === curr.code
+                          ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
+                          : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span className="mr-2 font-bold">
+                        {curr.symbol}
+                      </span>
+                      <span>
+                        {curr.code} - {curr.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   // Handler for changing language
   const handleLanguageChange = async (langCode, langName) => {
@@ -305,9 +708,192 @@ const Navbar = () => {
     navigate("/");
   };
 
+  const profileMenuContent =
+    isProfileMenuOpen &&
+    typeof document !== "undefined" &&
+    createPortal(
+      <div
+        ref={profileMenuRef}
+        className="navbar-dropdown-layer w-72 rounded-xl border border-neutral-200 bg-white py-1 shadow-card"
+        style={{ top: profileMenuPosition.top, right: profileMenuPosition.right }}
+      >
+        {!isAuthenticated ? (
+          <div className="py-1">
+            <Link
+              to="/login"
+              className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+              onClick={() => setIsProfileMenuOpen(false)}
+            >
+              {getText("common", "login")}
+            </Link>
+            <Link
+              to="/register"
+              className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+              onClick={() => setIsProfileMenuOpen(false)}
+            >
+              {getText("common", "signup")}
+            </Link>
+            <Link
+              to="/host/become-a-host"
+              className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+              onClick={() => setIsProfileMenuOpen(false)}
+            >
+              {getText("common", "becomeHost")}
+            </Link>
+            <Link
+              to="/help"
+              className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+              onClick={() => setIsProfileMenuOpen(false)}
+            >
+              {getText("common", "help")}
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="p-4">
+              <div className="flex items-center">
+                <div className="mr-3">
+                  <UserAvatar
+                    user={currentUser}
+                    sizeClass="w-10 h-10"
+                    textClass="text-sm"
+                  />
+                </div>
+                <div>
+                  <p className="font-semibold text-neutral-800">
+                    {currentUser.firstName} {currentUser.lastName}
+                  </p>
+                  <p className="text-xs text-neutral-500">{currentUser.email}</p>
+                </div>
+              </div>
+            </div>
+            <div className="py-1">
+              <Link
+                to="/messages"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                {getText("common", "messages")}
+              </Link>
+              <Link
+                to="/trips"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                {getText("common", "trips")}
+              </Link>
+              <Link
+                to="/wishlist"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                {getText("common", "wishlist")}
+              </Link>
+            </div>
+            <div className="py-1">
+              <Link
+                to="/host/listings"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                Manage listings
+              </Link>
+              <Link
+                to="/tenant/room-sharing"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                Post vacancy
+              </Link>
+              <Link
+                to="/tenant/swipe-matching"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                Smart Swipe matches
+              </Link>
+              <Link
+                to="/account"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                {getText("common", "account")}
+              </Link>
+              <button
+                className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={handleLogout}
+              >
+                {getText("common", "logout")}
+              </button>
+              <Link
+                to="/help"
+                className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                onClick={() => setIsProfileMenuOpen(false)}
+              >
+                {getText("common", "help")}
+              </Link>
+            </div>
+          </>
+        )}
+      </div>,
+      document.body
+    );
+
+  const getStartedMenuContent =
+    isGetStartedOpen &&
+    typeof document !== "undefined" &&
+    createPortal(
+      <div
+        ref={getStartedMenuRef}
+        className="navbar-dropdown-layer w-80 overflow-hidden rounded-[24px] border border-neutral-200 bg-white p-3 shadow-card"
+        style={{ top: getStartedMenuPosition.top, right: getStartedMenuPosition.right }}
+      >
+        <div className="mb-2 px-2 py-1">
+          <p className="text-sm font-semibold text-neutral-900">Choose your role</p>
+          <p className="text-xs text-neutral-500">Continue with the right sign up or login flow.</p>
+        </div>
+
+        <div className="space-y-2">
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                <i className="fas fa-house-user" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">Host</p>
+                <p className="text-xs text-neutral-500">Publish rooms and manage listings</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => navigateToAuth("host", "register")} className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-primary-700">Sign Up</button>
+              <button onClick={() => navigateToAuth("host", "login")} className="flex-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700">Login</button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+                <i className="fas fa-user" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">Tenant</p>
+                <p className="text-xs text-neutral-500">Search rooms and contact hosts</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => navigateToAuth("tenant", "register")} className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-primary-700">Sign Up</button>
+              <button onClick={() => navigateToAuth("tenant", "login")} className="flex-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700">Login</button>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+
   return (
-    <nav className="bg-white py-4 px-2 md:px-6 sticky top-0 z-20 shadow-sm">
-      <div className="container mx-auto">
+    <>
+      <nav className="bg-white py-4 px-2 md:px-6 sticky top-0 z-[1200] shadow-sm">
+      <div className="container relative z-[1201] mx-auto">
         {/* Main navigation bar with logo and menu items */}
         <div className="flex justify-between items-center">
           {/* Logo */}
@@ -327,248 +913,50 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Center search bar - Responsive for all screens */}
-          {location.pathname === "/" && (
-            <div
-              ref={searchRef}
-              className="flex relative mx-auto max-w-md w-full rounded-full border border-neutral-200 shadow-search hover:shadow-md transition duration-200"
-            >
-              <form onSubmit={handleSearchSubmit} className="relative w-full flex items-center">
-                <input
-                  type="text"
-                  placeholder={getText("common", "search")}
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onFocus={() => setIsSearchFocused(true)}
-                  /* Changed px-8 to pl-6 pr-12 for better spacing */
-                  className="w-full pl-6 pr-12 py-2.5 rounded-full focus:outline-none text-sm text-neutral-700 placeholder:text-transparent sm:placeholder:text-neutral-400"
-                />
-
-                <button
-                  type="submit"
-                  /* Removed top-1/2 and translate-y to let Flexbox handle vertical centering */
-                  /* Removed m-1 which was pushing it off-center */
-                  className="absolute right-1.5 bg-[#FF4C6D] text-white rounded-full hover:bg-[#E03F5A] transition duration-200 flex items-center justify-center w-8 h-8"
-                >
-                  <i className="fas fa-search text-[10px]"></i>
-                </button>
-              </form>             
-
-              {/* Search Dropdown - appears when search is focused */}
-              {isSearchFocused && (
-                <div className="absolute w-full mt-1 top-full left-0 bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden z-20">
-                  {/* Recent Searches Section */}
-                  {recentSearches.length > 0 && (
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-neutral-800">
-                          Recent Searches
-                        </h3>
-                        <button
-                          onClick={clearRecentSearches}
-                          className="text-xs text-neutral-500 hover:text-neutral-700"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        {recentSearches.map((search, index) => (
-                          <div
-                            key={index}
-                            onClick={() => handleSuggestionClick(search)}
-                            className="flex items-center p-2 hover:bg-neutral-50 rounded-md cursor-pointer"
-                          >
-                            <i className="fas fa-history text-neutral-400 mr-3"></i>
-                            <span className="text-sm text-neutral-700">
-                              {search}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Navigation - Responsive */}
           <div className="flex items-center gap-1 md:gap-2">
             {!isAuthenticated && (
               <div ref={getStartedRef} className="relative hidden sm:block">
                 <button
+                  ref={getStartedButtonRef}
                   type="button"
-                  onClick={() => setIsGetStartedOpen((prev) => !prev)}
+                  onClick={() => {
+                    if (!isGetStartedOpen) {
+                      updateGetStartedMenuPosition();
+                    }
+                    setIsProfileMenuOpen(false);
+                    setIsGetStartedOpen((prev) => !prev);
+                  }}
                   className="flex items-center gap-2 rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 hover:shadow-md"
                 >
                   <span>Get Started</span>
                   <i className={`fas fa-chevron-${isGetStartedOpen ? "up" : "down"} text-[10px]`} />
                 </button>
 
-                {isGetStartedOpen && (
-                  <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-[24px] border border-neutral-200 bg-white p-3 shadow-card z-[1000]">
-                    <div className="mb-2 px-2 py-1">
-                      <p className="text-sm font-semibold text-neutral-900">Choose your role</p>
-                      <p className="text-xs text-neutral-500">Continue with the right sign up or login flow.</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-3">
-                        <div className="mb-2 flex items-center gap-2">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
-                            <i className="fas fa-house-user" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-neutral-900">Host</p>
-                            <p className="text-xs text-neutral-500">Publish rooms and manage listings</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => navigateToAuth("host", "register")} className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-primary-700">Sign Up</button>
-                          <button onClick={() => navigateToAuth("host", "login")} className="flex-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700">Login</button>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
-                        <div className="mb-2 flex items-center gap-2">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-                            <i className="fas fa-user" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-neutral-900">Tenant</p>
-                            <p className="text-xs text-neutral-500">Search rooms and contact hosts</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => navigateToAuth("tenant", "register")} className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-primary-700">Sign Up</button>
-                          <button onClick={() => navigateToAuth("tenant", "login")} className="flex-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700">Login</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
-            <div ref={preferencesRef} className="relative hidden md:block">
+            <div ref={preferencesRef} className="relative block">
                 <motion.button
                   type="button"
-                  onClick={() => setIsPreferencesOpen((prev) => !prev)}
-                  className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                  onClick={() => {
+                    setIsSettingsMenuOpen(false);
+                    setIsProfileMenuOpen(false);
+                    setIsGetStartedOpen(false);
+                    setIsPreferencesOpen((prev) => !prev);
+                  }}
+                  className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 md:px-4 md:py-2.5"
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.94 }}
                   aria-expanded={isPreferencesOpen}
                   aria-haspopup="dialog"
                 >
                   <i className="fas fa-sliders-h text-xs" />
-                  <span>Preferences</span>
+                  <span className="text-xs sm:text-sm">Preferences</span>
                 </motion.button>
-
-                {isPreferencesOpen && (
-                  <div className="absolute right-0 mt-3 w-[22rem] overflow-hidden rounded-[24px] border border-neutral-200 bg-white p-4 shadow-card z-[1000]">
-                    <div className="mb-3">
-                      <p className="text-sm font-semibold text-neutral-900">Roommate preferences</p>
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {isAuthenticated
-                          ? "Hidden by default and pulled from your latest room-sharing draft or listing."
-                          : "View the roommate preference fields that will be shown inside the tenant room-sharing feature."}
-                      </p>
-                    </div>
-
-                    {isAuthenticated ? (
-                      <>
-                        <div className="space-y-3 text-sm text-neutral-700">
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Gender preference</span>
-                            <span className="text-right font-medium">{preferenceSnapshot.gender}</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Occupation</span>
-                            <span className="text-right font-medium">
-                              {preferenceSnapshot.occupation?.length
-                                ? preferenceSnapshot.occupation.join(", ")
-                                : "Any"}
-                            </span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Smoking habits</span>
-                            <span className="text-right font-medium">{preferenceSnapshot.smoking}</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Drinking habits</span>
-                            <span className="text-right font-medium">{preferenceSnapshot.drinking}</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Cleanliness</span>
-                            <span className="text-right font-medium">{preferenceSnapshot.cleanliness}</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Sleep schedule</span>
-                            <span className="text-right font-medium">
-                              {preferenceSnapshot.sleepSchedule || "Not specified"}
-                            </span>
-                          </div>
-                        </div>
-
-                        <Link
-                          to="/tenant/room-sharing"
-                          className="mt-4 inline-flex items-center text-sm font-semibold text-primary-600 transition hover:text-primary-700"
-                          onClick={() => setIsPreferencesOpen(false)}
-                        >
-                          Update room-sharing preferences
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-3 rounded-2xl bg-sky-50/70 p-4 text-sm text-neutral-700">
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Gender preference</span>
-                            <span className="text-right font-medium">Male / Female / Any</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Occupation</span>
-                            <span className="text-right font-medium">Student / Working</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Smoking / Drinking</span>
-                            <span className="text-right font-medium">Lifestyle habits</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Cleanliness</span>
-                            <span className="text-right font-medium">Hygiene expectations</span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span className="text-neutral-500">Other preferences</span>
-                            <span className="text-right font-medium">Sleep schedule and more</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-                          <div>
-                            <p className="text-sm font-semibold text-neutral-900">Tenant access</p>
-                            <p className="mt-1 text-xs text-neutral-500">
-                              Sign in as tenant to post vacancy and manage these preferences.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPreferencesOpen(false);
-                              navigate("/login?role=tenant");
-                            }}
-                            className="rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-700"
-                          >
-                            Tenant Login
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
               </div>
 
-            <div className="hidden md:flex">
+            <div className="flex">
               <ThemeToggle theme={theme} onToggle={toggleTheme} compact />
             </div>
 
@@ -578,6 +966,7 @@ const Navbar = () => {
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   setMenuPosition({ x: rect.left, y: rect.bottom });
+                  setIsPreferencesOpen(false);
                   setIsSettingsMenuOpen(!isSettingsMenuOpen);
                 }}
                 className="flex items-center justify-center p-2 text-neutral-700 hover:text-neutral-900 transition duration-200 relative"
@@ -627,213 +1016,20 @@ const Navbar = () => {
                 )}
               </button>
 
-              {/* Language and Currency Modal */}
-              {isSettingsMenuOpen && (
-                <div
-                  className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center animate-fadeIn"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="settings-modal-title"
-                >
-                  <div
-                    ref={menuRef}
-                    className="bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto mx-4 transform transition-all duration-300 ease-out
-                      sm:max-w-xl sm:w-full"
-                    style={{
-                      animation: "fadeInUp 0.3s ease-out",
-                      maxWidth: "min(90vw, 32rem)",
-                      marginTop: Math.min(
-                        menuPosition.y + 20,
-                        window.innerHeight - 600
-                      ),
-                    }}
-                  >
-                    {/* Header with close button */}
-                    <div className="flex justify-between items-center p-4 border-b border-neutral-200 sticky top-0 bg-white z-10">
-                      <h2
-                        id="settings-modal-title"
-                        className="text-xl font-bold text-neutral-800"
-                      >
-                        Language and Currency
-                      </h2>
-                      <div className="flex items-center">
-                        <span
-                          className="text-sm text-neutral-500 mr-3"
-                          role="status"
-                          aria-live="polite"
-                        >
-                          Currently: {languageName}, {currency}
-                        </span>
-                        <button
-                          onClick={() => setIsSettingsMenuOpen(false)}
-                          className="text-neutral-500 hover:text-neutral-700 p-2 rounded-full hover:bg-neutral-100 transition duration-200"
-                          aria-label="Close settings"
-                        >
-                          <i className="fas fa-times" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Language Selection Section */}
-                    <div className="p-6 border-b border-neutral-200">
-                      <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-                        <div>
-                          <p className="text-sm font-semibold text-neutral-900">Appearance</p>
-                          <p className="mt-1 text-xs text-neutral-500">
-                            Switch between light and dark mode anytime.
-                          </p>
-                        </div>
-                        <ThemeToggle theme={theme} onToggle={toggleTheme} />
-                      </div>
-
-                      <h3 className="text-lg font-semibold text-neutral-800 mb-4">
-                        Select a language
-                      </h3>
-
-                      {isTranslating ? (
-                        <div className="flex justify-center py-8">
-                          <i className="fas fa-spinner fa-spin text-primary-500 mr-2 text-xl"></i>
-                          <span className="text-neutral-700">
-                            Loading translations...
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          {/* Language regions */}
-                          <div className="mb-6">
-                            <div className="font-medium text-neutral-700 mb-2">
-                              Suggested languages
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {supportedLanguages.slice(0, 6).map((lang) => (
-                                <button
-                                  key={lang.code}
-                                  onClick={() =>
-                                    handleLanguageChange(lang.code, lang.name)
-                                  }
-                                  className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
-                                    language === lang.code
-                                      ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
-                                      : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
-                                  }`}
-                                >
-                                  <span>{lang.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <div className="font-medium text-neutral-700 mb-2">
-                              All languages
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {supportedLanguages.map((lang) => (
-                                <button
-                                  key={lang.code}
-                                  onClick={() =>
-                                    handleLanguageChange(lang.code, lang.name)
-                                  }
-                                  className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
-                                    language === lang.code
-                                      ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
-                                      : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
-                                  }`}
-                                >
-                                  <span>{lang.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Currency Selection Section */}
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-neutral-800 mb-4">
-                        Select a currency
-                      </h3>
-
-                      {isLoadingRates ? (
-                        <div className="flex justify-center py-8">
-                          <i className="fas fa-spinner fa-spin text-primary-500 mr-2 text-xl"></i>
-                          <span className="text-neutral-700">
-                            Loading exchange rates...
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          {/* Popular currencies */}
-                          <div className="mb-6">
-                            <div className="font-medium text-neutral-700 mb-2">
-                              Popular currencies
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {currencies.slice(0, 4).map((curr) => (
-                                <button
-                                  key={curr.code}
-                                  onClick={() =>
-                                    handleCurrencyChange(curr.code)
-                                  }
-                                  className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
-                                    currency === curr.code
-                                      ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
-                                      : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
-                                  }`}
-                                >
-                                  <span className="mr-2 font-bold">
-                                    {curr.symbol}
-                                  </span>
-                                  <span>
-                                    {curr.code} - {curr.name}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* All currencies */}
-                          <div>
-                            <div className="font-medium text-neutral-700 mb-2">
-                              All currencies
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {currencies.map((curr) => (
-                                <button
-                                  key={curr.code}
-                                  onClick={() =>
-                                    handleCurrencyChange(curr.code)
-                                  }
-                                  className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
-                                    currency === curr.code
-                                      ? "bg-primary-50 text-primary-600 font-medium border-2 border-primary-200"
-                                      : "text-neutral-700 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300"
-                                  }`}
-                                >
-                                  <span className="mr-2 font-bold">
-                                    {curr.symbol}
-                                  </span>
-                                  <span>
-                                    {curr.code} - {curr.name}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* User profile menu */}
 
             <div className="relative">
               <button
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                ref={profileButtonRef}
+                onClick={() => {
+                  if (!isProfileMenuOpen) {
+                    updateProfileMenuPosition();
+                  }
+                  setIsGetStartedOpen(false);
+                  setIsProfileMenuOpen((prev) => !prev);
+                }}
                 className="flex items-center space-x-2 border border-neutral-300 p-2 rounded-full hover:shadow-md transition duration-200"
                 aria-label="User menu"
               >
@@ -847,196 +1043,21 @@ const Navbar = () => {
                 )}
               </button>
 
-              {/* User dropdown menu */}
-              {isProfileMenuOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-card border border-neutral-200 divide-neutral-100 py-1 z-[1000]"
-                  style={{ zIndex: 1000 }}
-                >
-                  {!isAuthenticated ? (
-                    // Not logged in menu options
-                    <div className="py-1">
-                      <Link
-                        to="/login"
-                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
-                        {getText("common", "login")}
-                      </Link>
-                      <Link
-                        to="/register"
-                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
-                        {getText("common", "signup")}
-                      </Link>
-                      <Link
-                        to="/host/become-a-host"
-                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
-                        {getText("common", "becomeHost")}
-                      </Link>
-                      <Link
-                        to="/help"
-                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
-                        {getText("common", "help")}
-                      </Link>
-                    </div>
-                  ) : (
-                    // Logged in user menu options
-                    <>
-                      {/* User profile summary */}
-                      <div className="p-4">
-                        <div className="flex items-center">
-                          <div className="mr-3">
-                            <UserAvatar
-                              user={currentUser}
-                              sizeClass="w-10 h-10"
-                              textClass="text-sm"
-                            />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-neutral-800">
-                              {currentUser.firstName} {currentUser.lastName}
-                            </p>
-                            <p className="text-xs text-neutral-500">
-                              {currentUser.email}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      {/* User activity links */}
-                      <div className="py-1">
-                        <Link
-                          to="/messages"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          {getText("common", "messages")}
-                        </Link>
-                        <Link
-                          to="/trips"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          {getText("common", "trips")}
-                        </Link>
-                        <Link
-                          to="/wishlist"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          {getText("common", "wishlist")}
-                        </Link>
-                      </div>
-                      {/* Account management links */}
-                      <div className="py-1">
-                        <Link
-                          to="/host/listings"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          Manage listings
-                        </Link>
-                        <Link
-                          to="/tenant/room-sharing"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          Post vacancy
-                        </Link>
-                        <Link
-                          to="/account"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          {getText("common", "account")}
-                        </Link>
-                        <button
-                          className="w-full text-left block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={handleLogout}
-                        >
-                          {getText("common", "logout")}
-                        </button>
-                        <Link
-                          to="/help"
-                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          {getText("common", "help")}
-                        </Link>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+            </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Search Overlay */}
-        {isSearchFocused && location.pathname === "/" && (
-          <div className="fixed inset-0 bg-white z-50 md:hidden p-4">
-            <div className="flex items-center mb-4">
-              <button
-                onClick={() => setIsSearchFocused(false)}
-                className="p-2 hover:bg-neutral-100 rounded-full"
-              >
-                <i className="fas fa-arrow-left text-neutral-700"></i>
-              </button>
-              <span className="ml-4 text-lg font-semibold">Search</span>
-            </div>
-
-            <div className="relative">
-              <form onSubmit={handleSearchSubmit} className="w-full">
-                <input
-                  type="text"
-                  placeholder={getText("common", "search")}
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  autoFocus
-                />
-              </form>
-
-              {/* Recent Searches */}
-              {recentSearches.length > 0 && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold">Recent Searches</h3>
-                    <button
-                      onClick={clearRecentSearches}
-                      className="text-xs text-neutral-500"
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {recentSearches.map((search, index) => (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          handleSuggestionClick(search);
-                          setIsSearchFocused(false);
-                        }}
-                        className="flex items-center p-2 hover:bg-neutral-50 rounded-lg"
-                      >
-                        <i className="fas fa-history text-neutral-400 mr-3"></i>
-                        <span className="text-sm">{search}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
+      </nav>
+      {getStartedMenuContent}
+      {profileMenuContent}
+      {isSettingsMenuOpen &&
+        typeof document !== "undefined" &&
+        createPortal(settingsMenuContent, document.body)}
+      {isPreferencesOpen &&
+        typeof document !== "undefined" &&
+        createPortal(preferencesContent, document.body)}
+    </>
   );
 };
 export default Navbar;

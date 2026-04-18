@@ -117,6 +117,12 @@ body {
   animation: scaleIn 0.3s ease-out;
 }
 
+.navbar-dropdown-layer {
+  position: fixed;
+  z-index: 9999;
+  max-width: calc(100vw - 2rem);
+}
+
 /* Utility classes that extend Tailwind */
 .text-shadow {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

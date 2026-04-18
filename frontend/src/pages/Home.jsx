@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, MapPin, Search } from "lucide-react";
-import { motion } from "framer-motion";
+import { MapPin, Search } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { CHENNAI_AREAS } from "../utils/chennaiListings";
 import { useAppSettings } from "../contexts/AppSettingsContext";
 
@@ -77,82 +77,65 @@ const quickHighlights = [
   },
 ];
 
-const smartRentCards = [
-  {
-    icon: "🏠",
-    title: "Clear room details",
-    description:
-      "Tenants can quickly see rent, photos, room type, and availability before they start a conversation.",
-    badge: "Room clarity",
-    accent: "from-rose-400 via-orange-300 to-amber-200",
-    tilt: -8,
-  },
-  {
-    icon: "📍",
-    title: "Search by locality",
-    description:
-      "The experience fits Chennai browsing habits with familiar areas like Adyar, Velachery, Tambaram, and OMR.",
-    badge: "Chennai focused",
-    accent: "from-sky-500 via-cyan-300 to-blue-200",
-    tilt: 8,
-  },
-  {
-    icon: "💬",
-    title: "Faster tenant contact",
-    description:
-      "The platform keeps the host contact flow simple so tenants can ask questions and move faster.",
-    badge: "Quick connect",
-    accent: "from-fuchsia-500 via-rose-300 to-pink-200",
-    tilt: -7,
-  },
-  {
-    icon: "✨",
-    title: "Easy host publishing",
-    description:
-      "Hosts can upload photos, add pricing, mention locality details, and publish listings without extra steps.",
-    badge: "Publish simply",
-    accent: "from-emerald-500 via-teal-300 to-cyan-200",
-    tilt: 7,
-  },
-];
-
-const showcasePoints = [
-  "Tenant-first room discovery",
-  "Locality-based search flow",
-  "Cleaner listing information",
-  "Simple host publishing journey",
-];
-
-const cardVariants = {
-  offscreen: {
-    y: 220,
-    rotate: 0,
-    opacity: 0,
-  },
-  onscreen: (tilt) => ({
-    y: 34,
-    rotate: tilt,
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: {
     opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const heroHeadlineWords = [
+  "Discover",
+  "stays",
+  "that",
+  "feel",
+  "right",
+  "from",
+  "the",
+  "very",
+  "first",
+  "click.",
+];
+
+const headlineContainer = {
+  hidden: {},
+  show: {
     transition: {
-      type: "spring",
-      bounce: 0.34,
-      duration: 0.9,
+      staggerChildren: 0.08,
+      delayChildren: 0.12,
     },
-  }),
+  },
 };
 
-const splashStyle = {
-  position: "absolute",
-  inset: 0,
-  clipPath:
-    'path("M 12 252 C 12 238 23 229 39 226 L 315 176 C 330 173 344 185 344 200 L 356 370 C 356 386 343 399 327 399 L 37 399 C 23 399 12 388 12 374 Z")',
+const headlineWord = {
+  hidden: {
+    opacity: 0,
+    y: 34,
+    filter: "blur(12px)",
+    clipPath: "inset(0 0 100% 0)",
+  },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    clipPath: "inset(0 0 0% 0)",
+    transition: {
+      duration: 0.9,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
 };
 
-const cardShellStyle = {
-  width: "min(84vw, 332px)",
-  height: "396px",
-  borderRadius: "26px",
-  transformOrigin: "12% 62%",
+const staggerContainer = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
 };
 
 const Home = () => {
@@ -200,52 +183,117 @@ const Home = () => {
     <div
       className={`transition-colors duration-500 ${
         theme === "dark"
-          ? "bg-[linear-gradient(180deg,_#020617_0%,_#0f172a_35%,_#111827_100%)]"
-          : "bg-[linear-gradient(180deg,_#fff7f8_0%,_#fffdf8_22%,_#ffffff_100%)]"
+          ? "bg-[linear-gradient(180deg,_#000000_0%,_#050505_38%,_#090909_100%)]"
+          : "bg-[linear-gradient(180deg,_#ffe0d2_0%,_#ffedd5_24%,_#ffc7b6_62%,_#fff1e6_100%)]"
       }`}
     >
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.18),_transparent_28%)]" />
-        <div className="float-orb absolute left-[-6rem] top-20 h-56 w-56 rounded-full bg-rose-200/40 blur-3xl" />
-        <div className="float-orb-delayed absolute right-[-5rem] top-32 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
+        <motion.div
+          animate={{ y: [0, -18, 0], x: [0, 10, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-[-6rem] top-20 h-56 w-56 rounded-full bg-rose-200/40 blur-3xl"
+        />
+        <motion.div
+          animate={{ y: [0, 22, 0], x: [0, -14, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute right-[-5rem] top-32 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl"
+        />
 
         <div className="relative h-[640px] overflow-hidden">
           {heroImages.map((image, index) => (
-            <div
+            <motion.div
               key={image.alt}
               className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
                 index === currentIndex ? "opacity-100" : "opacity-0"
               }`}
+              animate={{
+                scale: index === currentIndex ? 1.04 : 1,
+              }}
+              transition={{ duration: 3.2, ease: "easeOut" }}
             >
               <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-[linear-gradient(120deg,_rgba(15,23,42,0.78)_0%,_rgba(15,23,42,0.56)_42%,_rgba(15,23,42,0.34)_100%)]" />
-            </div>
+            </motion.div>
           ))}
 
           <div className="absolute inset-0">
             <div className="container mx-auto flex h-full items-center px-4">
-              <div className="max-w-3xl text-white">
-                <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-rose-100 backdrop-blur">
+              <motion.div
+                className="max-w-3xl text-white"
+                initial="hidden"
+                animate="show"
+                variants={staggerContainer}
+              >
+                <motion.span
+                  variants={fadeUp}
+                  whileHover={{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    color: "#ffffff",
+                    borderColor: "rgba(255,255,255,0.42)",
+                    y: -2,
+                  }}
+                  className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-rose-100 backdrop-blur"
+                >
                   Smart Rent System
-                </span>
-                <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
-                  Discover stays that feel right from the very first click.
-                </h1>
+                </motion.span>
+                <motion.h1
+                  variants={headlineContainer}
+                  initial="hidden"
+                  animate="show"
+                  className="mt-6 max-w-4xl text-4xl font-bold leading-tight md:text-6xl"
+                >
+                  {heroHeadlineWords.map((word) => (
+                    <motion.span
+                      key={word}
+                      variants={headlineWord}
+                      className="hero-sheen-text mr-[0.28em] inline-block bg-[linear-gradient(92deg,_#ffffff_0%,_#f8fafc_18%,_#d4d4d8_42%,_#ffffff_62%,_#e5e7eb_82%,_#ffffff_100%)] bg-[length:220%_100%] bg-clip-text text-transparent drop-shadow-[0_3px_18px_rgba(15,23,42,0.72)] will-change-transform"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </motion.h1>
 
-                <div className="mt-5 min-h-[84px] max-w-3xl rounded-[24px] border border-white/15 bg-white/10 px-5 py-4 backdrop-blur transition duration-500">
-                  <p className="bg-gradient-to-r from-rose-200 via-white to-sky-200 bg-[length:200%_100%] bg-clip-text text-lg font-semibold text-transparent animate-pulse md:text-2xl">
-                    {heroQuotes[currentIndex].lineOne}
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-200 md:text-base">
-                    {heroQuotes[currentIndex].lineTwo}
-                  </p>
-                </div>
+                <motion.div
+                  variants={fadeUp}
+                  whileHover={{
+                    y: -4,
+                    backgroundColor: "rgba(255,255,255,0.16)",
+                    borderColor: "rgba(255,255,255,0.28)",
+                  }}
+                  className="mt-5 min-h-[84px] max-w-3xl rounded-[24px] border border-white/15 bg-white/10 px-5 py-4 backdrop-blur transition duration-500"
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`quote-${currentIndex}`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.45, ease: "easeOut" }}
+                    >
+                      <motion.p
+                        animate={{ backgroundPositionX: ["0%", "100%", "0%"] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                        className="bg-gradient-to-r from-rose-200 via-white to-sky-200 bg-[length:200%_100%] bg-clip-text text-lg font-semibold text-transparent md:text-2xl"
+                      >
+                        {heroQuotes[currentIndex].lineOne}
+                      </motion.p>
+                      <p className="mt-1 text-sm leading-6 text-slate-200 md:text-base">
+                        {heroQuotes[currentIndex].lineTwo}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+                </motion.div>
 
-                <form
+                <motion.form
+                  variants={fadeUp}
                   onSubmit={handleSearchSubmit}
                   className="mt-8 flex max-w-2xl flex-col gap-3 rounded-[28px] border border-white/15 bg-white/12 p-3 backdrop-blur-md md:flex-row"
                 >
-                  <div className="flex flex-1 items-center gap-3 rounded-[20px] bg-white px-4 py-4 text-neutral-700">
+                  <motion.div
+                    whileHover={{ backgroundColor: "#fff7f8" }}
+                    className="flex flex-1 items-center gap-3 rounded-[20px] bg-white px-4 py-4 text-neutral-700"
+                  >
                     <MapPin className="h-5 w-5 text-primary-600" />
                     <input
                       type="text"
@@ -254,289 +302,245 @@ const Home = () => {
                       placeholder="Search by area or locality"
                       className="w-full bg-transparent text-sm outline-none md:text-base"
                     />
-                  </div>
-                  <button
+                  </motion.div>
+                  <motion.button
                     type="submit"
                     className="inline-flex items-center justify-center gap-2 rounded-[20px] bg-rose-500 px-6 py-4 text-sm font-semibold text-white transition hover:bg-rose-600 md:text-base"
+                    whileHover={{
+                      y: -3,
+                      scale: 1.02,
+                      backgroundColor: "#e11d48",
+                      boxShadow: "0 18px 40px -20px rgba(225, 29, 72, 0.95)",
+                    }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Search className="h-4 w-4" />
                     Find Rooms
-                  </button>
-                </form>
+                  </motion.button>
+                </motion.form>
 
-                <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-100">
-                  <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">Tenant-first chat flow</span>
-                  <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">Smooth property discovery</span>
-                  <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">Manual locality support for hosts</span>
-                </div>
-              </div>
+                <motion.div variants={fadeUp} className="mt-6 flex flex-wrap gap-3 text-sm text-slate-100">
+                  {[
+                    "Tenant-first chat flow",
+                    "Smooth property discovery",
+                    "Manual locality support for hosts",
+                  ].map((tag) => (
+                    <motion.span
+                      key={tag}
+                      whileHover={{
+                        y: -2,
+                        backgroundColor: "rgba(255,255,255,0.18)",
+                        color: "#ffffff",
+                      }}
+                      className="rounded-full bg-white/10 px-4 py-2 backdrop-blur"
+                    >
+                      {tag}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              </motion.div>
             </div>
           </div>
 
-          <button
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/12 p-3 text-white backdrop-blur transition hover:bg-white/20"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/12 p-3 text-white backdrop-blur transition hover:bg-white/20"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-
           <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-2">
             {heroImages.map((_, index) => (
-              <button
+              <motion.button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
                 className={`rounded-full transition-all duration-300 ${
                   index === currentIndex ? "h-2 w-9 bg-white" : "h-2 w-2 bg-white/50"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.92 }}
               />
             ))}
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(244,63,94,0.10),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(14,165,233,0.12),_transparent_28%)]" />
-        <div className="relative mx-auto grid max-w-7xl items-start gap-8 px-4 lg:grid-cols-[1fr_0.95fr]">
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="lg:sticky lg:top-24 lg:pr-4"
-          >
-            <span className="inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-rose-600 dark:bg-rose-500/10 dark:text-rose-200">
-              Smart Rent flow
-            </span>
-            <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight text-slate-900 dark:text-white md:text-5xl">
-              A section that explains your website better while users scroll
-            </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300 md:text-base">
-              This scroll card area is customized for Smart Rent System, so it highlights room discovery, locality-based search, tenant contact flow, and host publishing instead of generic demo content.
-            </p>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <div className="theme-elevated rounded-[24px] border p-5 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.22)]">
-                <p className="text-sm font-semibold text-rose-500">For tenants</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Compare rooms quickly, search by area, and contact hosts with less confusion.
-                </p>
-              </div>
-              <div className="theme-elevated rounded-[24px] border p-5 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.22)]">
-                <p className="text-sm font-semibold text-sky-600">For hosts</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Publish listings, add pricing, and showcase room photos in a simpler workflow.
-                </p>
-              </div>
-            </div>
-
-            <div className="theme-elevated mt-5 rounded-[28px] border p-6 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.2)]">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-violet-600 dark:text-violet-300">
-                    Built for your website
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    Better spacing, better readability, and content tied to real rental actions.
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-[linear-gradient(135deg,_#fdf2f8,_#eef2ff)] px-4 py-3 text-right dark:bg-[linear-gradient(135deg,_rgba(91,33,182,0.28),_rgba(15,23,42,0.75))]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-500 dark:text-violet-200">
-                    Focus
-                  </p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">Local rentals</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3">
-                {showcasePoints.map((point) => (
-                  <div
-                    key={point}
-                    className="theme-surface flex items-center gap-3 rounded-2xl border px-4 py-3"
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">
-                      <i className="fas fa-check text-xs" />
-                    </span>
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{point}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="space-y-[-78px] pt-3 md:space-y-[-102px] lg:pl-2">
-            {smartRentCards.map((item, index) => (
-              <motion.div
-                key={item.title}
-                className="relative flex justify-center overflow-hidden px-2 py-6 md:py-8 lg:justify-start"
-                initial="offscreen"
-                whileInView="onscreen"
-                viewport={{ once: true, amount: 0.72 }}
-                custom={item.tilt}
-                variants={cardVariants}
-              >
-                <div
-                  className={`absolute inset-x-6 bottom-0 top-1 rounded-[34px] bg-gradient-to-br ${item.accent} opacity-80 blur-[2px] md:inset-x-10`}
-                  style={splashStyle}
-                />
-
-                <motion.div
-                  style={cardShellStyle}
-                  className="theme-elevated relative overflow-hidden border border-white/70 p-6 shadow-[0_40px_100px_-42px_rgba(15,23,42,0.45)] backdrop-blur"
-                >
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,_rgba(255,255,255,0.94)_0%,_rgba(255,255,255,0.98)_100%)] dark:bg-[linear-gradient(180deg,_rgba(15,23,42,0.74)_0%,_rgba(15,23,42,0.95)_100%)]" />
-                  <div className="relative flex h-full flex-col">
-                    <div className="flex items-start justify-between">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-3xl shadow-[0_16px_36px_-22px_rgba(15,23,42,0.5)] dark:bg-slate-800">
-                        {item.icon}
-                      </div>
-                      <span className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white dark:bg-white dark:text-slate-900">
-                        0{index + 1}
-                      </span>
-                    </div>
-
-                    <div className="mt-8">
-                      <span className="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">
-                        {item.badge}
-                      </span>
-                      <h3 className="mt-4 text-3xl font-bold leading-tight text-slate-900 dark:text-white">
-                        {item.title}
-                      </h3>
-                      <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                        {item.description}
-                      </p>
-                    </div>
-
-                    <div className="mt-auto rounded-[22px] border border-neutral-200/80 bg-white/85 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/60">
-                      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-neutral-600 dark:text-slate-300">
-                        <span>User value</span>
-                        <span>Smart Rent</span>
-                      </div>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-slate-700">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${72 + index * 6}%` }}
-                          viewport={{ once: true, amount: 0.8 }}
-                          transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
-                          className={`h-full rounded-full bg-gradient-to-r ${item.accent}`}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-16">
+      <motion.section
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.18 }}
+        variants={staggerContainer}
+        className="mx-auto max-w-7xl px-4 py-16"
+      >
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
+          <motion.div variants={fadeUp}>
             <span className="inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-rose-600">
               Popular localities
             </span>
             <h2 className="mt-3 text-3xl font-bold text-neutral-900 md:text-4xl">
               Start with the areas tenants search most
             </h2>
-          </div>
-          <Link
-            to="/listings?location=Chennai"
-            className="inline-flex w-fit items-center rounded-full border border-neutral-200 bg-white px-5 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700"
-          >
-            Browse all listings
-          </Link>
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                to="/listings?location=Chennai"
+                className="inline-flex w-fit items-center rounded-full border border-neutral-200 bg-white px-5 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700"
+              >
+                Browse all listings
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {featuredAreas.map((area) => (
-            <Link
-              key={area.name}
-              to={`/listings?location=${encodeURIComponent(area.name)}`}
-              className="group overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] transition hover:-translate-y-1"
-            >
-              <div className="relative h-72 overflow-hidden">
-                <img
-                  src={area.image}
-                  alt={area.name}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-5 text-white">
-                  <h3 className="text-2xl font-semibold">{area.name}</h3>
-                  <p className="mt-2 text-sm text-slate-200">{area.note}</p>
-                </div>
-              </div>
-            </Link>
+            <motion.div key={area.name} variants={fadeUp}>
+              <motion.div
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.28, ease: "easeOut" }}
+              >
+                <Link
+                  to={`/listings?location=${encodeURIComponent(area.name)}`}
+                  className="group block overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] transition"
+                >
+                  <div className="relative h-72 overflow-hidden">
+                    <motion.img
+                      src={area.image}
+                      alt={area.name}
+                      className="h-full w-full object-cover"
+                      whileHover={{ scale: 1.08 }}
+                      transition={{ duration: 0.55, ease: "easeOut" }}
+                    />
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent"
+                      whileHover={{
+                        background:
+                          "linear-gradient(to top, rgba(225,29,72,0.72), rgba(15,23,42,0.22), rgba(14,165,233,0.16))",
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 p-5 text-white">
+                      <h3 className="text-2xl font-semibold">{area.name}</h3>
+                      <p className="mt-2 text-sm text-slate-200">{area.note}</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
-      <section className="bg-neutral-50/80 py-16">
+      <motion.section
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.18 }}
+        variants={staggerContainer}
+        className={`py-16 ${theme === "dark" ? "bg-black" : "bg-neutral-50/80"}`}
+      >
         <div className="mx-auto max-w-7xl px-4">
-          <div className="mb-8 max-w-2xl">
-            <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">
+          <motion.div variants={fadeUp} className="mb-8 max-w-2xl">
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] ${theme === "dark" ? "bg-black text-white" : "bg-sky-50 text-sky-700"}`}>
               Platform focus
             </span>
-            <h2 className="mt-3 text-3xl font-bold text-neutral-900 md:text-4xl">
+            <h2 className={`mt-3 text-3xl font-bold md:text-4xl ${theme === "dark" ? "text-white" : "text-neutral-900"}`}>
               Cleaner experience for local room discovery
             </h2>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <motion.div variants={staggerContainer} className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {quickHighlights.map((item) => (
-              <div
+              <motion.div
                 key={item.title}
-                className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.16)]"
+                variants={fadeUp}
+                whileHover={{
+                  y: -6,
+                  ...(theme === "dark"
+                    ? {
+                        backgroundColor: "#000000",
+                        borderColor: "rgba(248, 113, 113, 0.92)",
+                        boxShadow:
+                          "0 0 0 1px rgba(248,113,113,0.38), 0 28px 60px -32px rgba(239, 68, 68, 0.28)",
+                      }
+                    : {
+                        backgroundColor: "#fff3eb",
+                        borderColor: "#fb7185",
+                        boxShadow: "0 28px 60px -32px rgba(225, 29, 72, 0.22)",
+                      }),
+                }}
+                className={`rounded-[28px] border p-6 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.16)] ${
+                  theme === "dark" ? "border-red-400/40 bg-black" : "border-white/70 bg-white"
+                }`}
               >
-                <h3 className="text-xl font-semibold text-neutral-900">{item.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-neutral-600">{item.description}</p>
-              </div>
+                <h3 className={`text-xl font-semibold ${theme === "dark" ? "text-white" : "text-neutral-900"}`}>{item.title}</h3>
+                <p className={`mt-3 text-sm leading-6 ${theme === "dark" ? "text-white" : "text-neutral-600"}`}>{item.description}</p>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="mt-8 rounded-[30px] border border-rose-100 bg-[linear-gradient(135deg,_#fff1f2_0%,_#ffffff_55%,_#eff6ff_100%)] p-6 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.18)] md:p-8">
+          <motion.div
+            variants={fadeUp}
+            whileHover={{
+              y: -4,
+              boxShadow: "0 30px 70px -36px rgba(15, 23, 42, 0.24)",
+            }}
+            className={`mt-8 rounded-[30px] border p-6 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.18)] md:p-8 ${
+              theme === "dark"
+                ? "border-red-400/40 bg-black"
+                : "border-rose-100 bg-[linear-gradient(135deg,_#fff1f2_0%,_#ffffff_55%,_#eff6ff_100%)]"
+            }`}
+          >
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
-                <h3 className="text-2xl font-bold text-neutral-900">Ready to publish your room?</h3>
-                <p className="mt-3 text-sm leading-6 text-neutral-600 md:text-base">
+                <h3 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-neutral-900"}`}>Ready to publish your room?</h3>
+                <p className={`mt-3 text-sm leading-6 md:text-base ${theme === "dark" ? "text-white" : "text-neutral-600"}`}>
                   Add your locality manually, upload room photos, set monthly rent, and make the listing visible right away.
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2 text-sm text-neutral-600">
+                <div className={`mt-4 flex flex-wrap gap-2 text-sm ${theme === "dark" ? "text-white" : "text-neutral-600"}`}>
                   {CHENNAI_AREAS.slice(0, 6).map((area) => (
-                    <span key={area} className="rounded-full bg-white px-3 py-1.5 shadow-sm">
+                    <motion.span
+                      key={area}
+                      whileHover={{
+                        y: -2,
+                        ...(theme === "dark"
+                          ? {
+                              backgroundColor: "#000000",
+                              borderColor: "rgba(248,113,113,0.88)",
+                              color: "#ffffff",
+                            }
+                          : {
+                              backgroundColor: "#ffe4e6",
+                              color: "#000000",
+                            }),
+                      }}
+                      className={`rounded-full px-3 py-1.5 shadow-sm ${theme === "dark" ? "bg-black text-white border border-red-400/30" : "bg-white"}`}
+                    >
                       {area}
-                    </span>
+                    </motion.span>
                   ))}
                 </div>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to="/host/become-a-host"
-                  className="inline-flex items-center justify-center rounded-2xl bg-primary-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-primary-700"
-                >
-                  Become a Host
-                </Link>
-                <Link
-                  to="/listings?location=Chennai"
-                  className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-700"
-                >
-                  Explore Rooms
-                </Link>
+                <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link
+                    to="/host/become-a-host"
+                    className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-red-700"
+                  >
+                    Become a Host
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link
+                    to="/listings?location=Chennai"
+                    className={`inline-flex items-center justify-center rounded-2xl border px-5 py-3 text-sm font-medium transition ${
+                      theme === "dark"
+                        ? "border-red-400/40 bg-black text-white hover:border-red-300"
+                        : "border-neutral-200 bg-white text-neutral-700 hover:border-primary-200 hover:text-primary-700"
+                    }`}
+                  >
+                    Explore Rooms
+                  </Link>
+                </motion.div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 };

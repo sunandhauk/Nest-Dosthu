@@ -7,6 +7,20 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+const getMapCenter = (property) => {
+  const coordinates = property?.location?.coordinates;
+
+  if (Array.isArray(coordinates) && coordinates.length === 2) {
+    return [Number(coordinates[1]), Number(coordinates[0])];
+  }
+
+  if (property?.location?.latitude && property?.location?.longitude) {
+    return [property.location.latitude, property.location.longitude];
+  }
+
+  return [13.0827, 80.2707];
+};
+
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -45,11 +59,6 @@ const PropertyMap = () => {
     const fetchProperty = async () => {
       try {
         setLoading(true);
-        const baseUrl = process.env.REACT_APP_API_URL || "/api";
-        const apiUrl = baseUrl.startsWith("http")
-          ? `${baseUrl}/properties/${id}`
-          : `${process.env.REACT_APP_API_URL}/api/properties/${id}`;
-
         const response = await api.get(`/api/properties/${id}`);
         if (response.data) {
           setProperty(response.data);
@@ -69,11 +78,8 @@ const PropertyMap = () => {
   }, [id]);
 
   // Default coordinates if property location is not available
-  const defaultCoords = [28.6139, 77.209];
-  const mapCenter =
-    property?.location?.latitude && property?.location?.longitude
-      ? [property.location.latitude, property.location.longitude]
-      : defaultCoords;
+  const defaultCoords = [13.0827, 80.2707];
+  const mapCenter = getMapCenter(property);
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
@@ -172,14 +178,14 @@ const PropertyMap = () => {
                   </p>
                   <p className="text-neutral-700">
                     <span className="font-medium">Postal Code:</span>{" "}
-                    {property?.location?.postalCode ||
+                    {property?.location?.zipCode ||
                       "Postal code not available"}
                   </p>
                   <p className="text-neutral-700">
                     <span className="font-medium">Coordinates:</span>{" "}
-                    {property?.location?.latitude &&
-                      property?.location?.longitude
-                      ? `${property.location.latitude}, ${property.location.longitude}`
+                    {Array.isArray(property?.location?.coordinates) &&
+                    property.location.coordinates.length === 2
+                      ? `${property.location.coordinates[1]}, ${property.location.coordinates[0]}`
                       : "Coordinates not available"}
                   </p>
                 </div>

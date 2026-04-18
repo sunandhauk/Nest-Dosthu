@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { uploadMultipleToCloudinary } from "../utils/cloudinaryService";
 import { useAuth } from "../contexts/AuthContext";
 import { CHENNAI_AREAS, CHENNAI_CITY, saveStoredHostListings, getStoredHostListings } from "../utils/chennaiListings";
+import {
+  getChennaiLocalityMeta,
+  normalizeRoomPrice,
+} from "../utils/chennaiLocations";
 
 const DIGIT_ONLY_FIELDS = new Set([
   "price",
@@ -79,7 +83,9 @@ const BecomeHost = () => {
     if (!form.address.trim()) return "Address is required";
     if (!form.locality.trim()) return "Chennai area is required";
     if (!form.zipCode.trim()) return "Pincode is required";
-    if (!form.price || Number(form.price) <= 0) return "Valid monthly price is required";
+    if (!form.price || Number(form.price) < 3000 || Number(form.price) > 4000) {
+      return "Monthly price must be between Rs.3000 and Rs.4000";
+    }
     if (photos.length === 0) return "At least one room image is required";
     return "";
   };
@@ -110,6 +116,8 @@ const BecomeHost = () => {
         }));
       }
 
+      const localityMeta = getChennaiLocalityMeta(form.locality);
+
       const listing = {
         id: `HOST-${Date.now()}`,
         _id: `HOST-${Date.now()}`,
@@ -118,7 +126,7 @@ const BecomeHost = () => {
         description: form.description.trim(),
         propertyType: form.propertyType,
         category: form.propertyType,
-        price: Number(form.price),
+        price: normalizeRoomPrice(Number(form.price)),
         status: "active",
         rating: 5,
         averageRating: 5,
@@ -129,7 +137,8 @@ const BecomeHost = () => {
           state: "Tamil Nadu",
           country: "India",
           zipCode: form.zipCode.trim(),
-          coordinates: [80.2707, 13.0827],
+          landmark: localityMeta.landmark,
+          coordinates: localityMeta.coordinates,
         },
         images: uploadedImages.map((image, index) => ({
           url: image.secure_url || image.url || photos[index]?.preview || "",
@@ -234,9 +243,10 @@ const BecomeHost = () => {
                     autoComplete="off"
                     value={form.price}
                     onChange={updateField}
-                    placeholder="7000"
+                    placeholder="3000 - 4000"
                     className="manual-number-input w-full rounded-2xl border border-neutral-200 px-4 py-3 outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-100"
                   />
+                  <p className="mt-2 text-xs text-neutral-500">Allowed range: Rs.3000 to Rs.4000 per month.</p>
                 </div>
 
                 <div>

@@ -70,7 +70,7 @@ const createConversation = async (req, res) => {
     const populatedConversation = await Conversation.findById(conversation._id)
       .populate({
         path: 'participants',
-        select: 'username firstName lastName profileImage phone'
+        select: 'username firstName lastName profileImage phone role'
       })
       .populate({
         path: 'property',
@@ -96,7 +96,7 @@ const getConversations = async (req, res) => {
     })
       .populate({
         path: 'participants',
-        select: 'username firstName lastName profileImage phone'
+        select: 'username firstName lastName profileImage phone role'
       })
       .populate({
         path: 'property',
@@ -123,7 +123,7 @@ const getConversationById = async (req, res) => {
     const conversation = await Conversation.findById(req.params.id)
       .populate({
         path: 'participants',
-        select: 'username firstName lastName profileImage phone'
+        select: 'username firstName lastName profileImage phone role'
       })
       .populate({
         path: 'property',

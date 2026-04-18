@@ -1,10 +1,30 @@
+import {
+  getChennaiLocalityMeta,
+  normalizeRoomPrice,
+} from "../utils/chennaiLocations";
+
+const createLocation = (locality) => {
+  const meta = getChennaiLocalityMeta(locality);
+
+  return {
+    address: meta.address,
+    city: "Chennai",
+    locality,
+    state: "Tamil Nadu",
+    country: "India",
+    zipCode: meta.zipCode,
+    landmark: meta.landmark,
+    coordinates: meta.coordinates,
+  };
+};
+
 export const dummyProperties = [
   {
     _id: "CHN-001",
     title: "Women's PG in Adyar",
     description:
       "Safe and affordable women's PG in Adyar with WiFi, food, laundry, and easy access to colleges and offices.",
-    price: 8500,
+    price: normalizeRoomPrice(3550),
     propertyType: "PG",
     category: "PG",
     capacity: {
@@ -14,11 +34,7 @@ export const dummyProperties = [
     size: 120,
     rating: 4.8,
     trending: true,
-    location: {
-      city: "Chennai",
-      locality: "Adyar",
-      country: "India",
-    },
+    location: createLocation("Adyar"),
     amenities: {
       wifi: true,
       kitchen: true,
@@ -35,7 +51,7 @@ export const dummyProperties = [
     title: "Working Women's Hostel in Adyar",
     description:
       "Comfortable hostel stay for working women in Adyar with security, attached bathroom, and meal service.",
-    price: 7000,
+    price: normalizeRoomPrice(3400),
     propertyType: "Hostel",
     category: "Hostel",
     capacity: {
@@ -44,11 +60,7 @@ export const dummyProperties = [
     },
     size: 100,
     rating: 4.6,
-    location: {
-      city: "Chennai",
-      locality: "Adyar",
-      country: "India",
-    },
+    location: createLocation("Adyar"),
     amenities: {
       wifi: true,
       kitchen: false,
@@ -65,7 +77,7 @@ export const dummyProperties = [
     title: "Private Room in Vadapalani",
     description:
       "Budget-friendly private room in Vadapalani near metro, malls, and offices. Suitable for students and working professionals.",
-    price: 6500,
+    price: normalizeRoomPrice(3600),
     propertyType: "Room",
     category: "Room",
     capacity: {
@@ -75,11 +87,7 @@ export const dummyProperties = [
     size: 90,
     rating: 4.5,
     trending: true,
-    location: {
-      city: "Chennai",
-      locality: "Vadapalani",
-      country: "India",
-    },
+    location: createLocation("Vadapalani"),
     amenities: {
       wifi: true,
       kitchen: true,
@@ -96,7 +104,7 @@ export const dummyProperties = [
     title: "Men's PG in Vadapalani",
     description:
       "Shared PG accommodation for men in Vadapalani with furnished rooms, WiFi, and food.",
-    price: 5500,
+    price: normalizeRoomPrice(3200),
     propertyType: "PG",
     category: "PG",
     capacity: {
@@ -105,11 +113,7 @@ export const dummyProperties = [
     },
     size: 110,
     rating: 4.4,
-    location: {
-      city: "Chennai",
-      locality: "Vadapalani",
-      country: "India",
-    },
+    location: createLocation("Vadapalani"),
     amenities: {
       wifi: true,
       kitchen: true,
@@ -126,7 +130,7 @@ export const dummyProperties = [
     title: "Student Room in Velachery",
     description:
       "Neat and compact room in Velachery ideal for students. Nearby bus stand, railway station, and restaurants.",
-    price: 6000,
+    price: normalizeRoomPrice(3300),
     propertyType: "Room",
     category: "Room",
     capacity: {
@@ -135,11 +139,7 @@ export const dummyProperties = [
     },
     size: 85,
     rating: 4.3,
-    location: {
-      city: "Chennai",
-      locality: "Velachery",
-      country: "India",
-    },
+    location: createLocation("Velachery"),
     amenities: {
       wifi: true,
       kitchen: true,
@@ -155,7 +155,7 @@ export const dummyProperties = [
     title: "Women's Hostel in Velachery",
     description:
       "Secure women's hostel in Velachery with CCTV, meals, laundry, and clean shared rooms.",
-    price: 7200,
+    price: normalizeRoomPrice(3850),
     propertyType: "Hostel",
     category: "Hostel",
     capacity: {
@@ -165,11 +165,7 @@ export const dummyProperties = [
     size: 115,
     rating: 4.7,
     trending: true,
-    location: {
-      city: "Chennai",
-      locality: "Velachery",
-      country: "India",
-    },
+    location: createLocation("Velachery"),
     amenities: {
       wifi: true,
       kitchen: false,
@@ -186,7 +182,7 @@ export const dummyProperties = [
     title: "Working Men's Hostel in Tambaram",
     description:
       "Affordable hostel for working men in Tambaram with food, WiFi, and good transport connectivity.",
-    price: 5000,
+    price: normalizeRoomPrice(3100),
     propertyType: "Hostel",
     category: "Hostel",
     capacity: {
@@ -195,11 +191,7 @@ export const dummyProperties = [
     },
     size: 105,
     rating: 4.2,
-    location: {
-      city: "Chennai",
-      locality: "Tambaram",
-      country: "India",
-    },
+    location: createLocation("Tambaram"),
     amenities: {
       wifi: true,
       kitchen: false,
@@ -215,7 +207,7 @@ export const dummyProperties = [
     title: "Budget Room in Tambaram",
     description:
       "Single occupancy budget room in Tambaram near railway station. Good for students and job seekers.",
-    price: 4800,
+    price: normalizeRoomPrice(3000),
     propertyType: "Room",
     category: "Room",
     capacity: {
@@ -224,11 +216,7 @@ export const dummyProperties = [
     },
     size: 80,
     rating: 4.1,
-    location: {
-      city: "Chennai",
-      locality: "Tambaram",
-      country: "India",
-    },
+    location: createLocation("Tambaram"),
     amenities: {
       wifi: true,
       kitchen: true,
@@ -244,7 +232,7 @@ export const dummyProperties = [
     title: "Shared PG in OMR",
     description:
       "Shared PG accommodation in OMR for IT employees with AC rooms, food, and shuttle access.",
-    price: 6200,
+    price: normalizeRoomPrice(3700),
     propertyType: "PG",
     category: "PG",
     capacity: {
@@ -254,11 +242,7 @@ export const dummyProperties = [
     size: 130,
     rating: 4.5,
     trending: true,
-    location: {
-      city: "Chennai",
-      locality: "OMR",
-      country: "India",
-    },
+    location: createLocation("OMR"),
     amenities: {
       wifi: true,
       kitchen: true,
@@ -276,7 +260,7 @@ export const dummyProperties = [
     title: "Women's PG in OMR",
     description:
       "Clean and secure women's PG in OMR with attached washroom, meals, and power backup.",
-    price: 7800,
+    price: normalizeRoomPrice(3950),
     propertyType: "PG",
     category: "PG",
     capacity: {
@@ -285,11 +269,7 @@ export const dummyProperties = [
     },
     size: 125,
     rating: 4.7,
-    location: {
-      city: "Chennai",
-      locality: "OMR",
-      country: "India",
-    },
+    location: createLocation("OMR"),
     amenities: {
       wifi: true,
       kitchen: false,

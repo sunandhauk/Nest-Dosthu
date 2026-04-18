@@ -24,7 +24,11 @@ Create `.env` file in the frontend directory:
 ```env
 REACT_APP_API_URL=http://localhost:8000
 REACT_APP_BACKEND_URL=http://localhost:8000
+REACT_APP_TAWK_PROPERTY_ID=your_tawk_property_id
+REACT_APP_TAWK_WIDGET_ID=your_tawk_widget_id
 ```
+
+Add your Tawk.to snippet IDs from the dashboard. If both values are present, the chat widget loads automatically across the site.
 
 ## Features
 

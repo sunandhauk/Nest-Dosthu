@@ -116,11 +116,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const googleAuth = async (code, redirectUri) => {
+  const googleAuth = async (code, redirectUri, role = "user") => {
     try {
       setError("");
 
-      const res = await api.post("/api/users/google", { code, redirectUri });
+      const res = await api.post("/api/users/google", { code, redirectUri, role });
 
       if (res.data && res.data.token) {
         setAccessToken(res.data.token);

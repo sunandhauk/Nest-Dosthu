@@ -225,6 +225,7 @@ CLOUDINARY_SECRET=your_api_secret
 # Google OAuth (Optional)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 ```
 
 **3. Frontend Setup**
@@ -237,9 +238,13 @@ npm install
 Create `.env` file in the `frontend` directory:
 
 ```env
-REACT_APP_API_URL=http://localhost:8000/api
+REACT_APP_API_URL=http://localhost:8000
 REACT_APP_SOCKET_URL=http://localhost:8000
+REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id
+REACT_APP_GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 ```
+
+Make sure the Google Cloud Console OAuth redirect URI matches both `GOOGLE_REDIRECT_URI` and `REACT_APP_GOOGLE_REDIRECT_URI`.
 
 **4. Launch Application**
 

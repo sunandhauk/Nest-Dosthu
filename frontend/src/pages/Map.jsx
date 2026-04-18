@@ -6,6 +6,20 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+const getMapCenter = (property) => {
+  const coordinates = property?.location?.coordinates;
+
+  if (Array.isArray(coordinates) && coordinates.length === 2) {
+    return [Number(coordinates[1]), Number(coordinates[0])];
+  }
+
+  if (property?.location?.latitude && property?.location?.longitude) {
+    return [property.location.latitude, property.location.longitude];
+  }
+
+  return [13.0827, 80.2707];
+};
+
 // Leaflet marker icons fix (using CDN)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -45,11 +59,8 @@ const PropertyMap = () => {
   }, [id]);
 
   // ✅ Default coordinates if location is missing
-  const defaultCoords = [28.6139, 77.209]; // Delhi
-  const mapCenter =
-    property?.location?.latitude && property?.location?.longitude
-      ? [property.location.latitude, property.location.longitude]
-      : defaultCoords;
+  const defaultCoords = [13.0827, 80.2707];
+  const mapCenter = getMapCenter(property);
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
@@ -166,14 +177,14 @@ const PropertyMap = () => {
                   </p>
                   <p className="text-neutral-700">
                     <span className="font-medium">Postal Code:</span>{" "}
-                    {property?.location?.postalCode ||
+                    {property?.location?.zipCode ||
                       "Postal code not available"}
                   </p>
                   <p className="text-neutral-700">
                     <span className="font-medium">Coordinates:</span>{" "}
-                    {property?.location?.latitude &&
-                      property?.location?.longitude
-                      ? `${property.location.latitude}, ${property.location.longitude}`
+                    {Array.isArray(property?.location?.coordinates) &&
+                    property.location.coordinates.length === 2
+                      ? `${property.location.coordinates[1]}, ${property.location.coordinates[0]}`
                       : "Coordinates not available"}
                   </p>
                 </div>
