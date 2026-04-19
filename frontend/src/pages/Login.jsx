@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useAppSettings } from "../contexts/AppSettingsContext";
 import { startGoogleAuth } from "../utils/googleAuth";
+import nestDosthuLogo from "../assets/nest-dosthu-logo.jpeg";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -175,11 +176,11 @@ const Login = () => {
       <div className="relative z-10 flex min-h-screen w-full items-start justify-center pt-8">
         <div className={cardClass}>
           <div className="mb-3 text-center">
-            <div className="mb-2 inline-block rounded-2xl bg-red-600 p-2 shadow-lg transition-transform duration-300 hover:scale-110">
+            <div className="mb-3 inline-block rounded-[24px] border border-amber-300/35 bg-[#12070a] p-2 shadow-lg transition-transform duration-300 hover:scale-105">
               <img
-                src="/android-chrome-512x512.png"
-                alt="Smart Rent Logo"
-                className="h-6 w-6 object-contain"
+                src={nestDosthuLogo}
+                alt="Nest Dosthu logo"
+                className="h-12 w-12 rounded-2xl object-cover"
               />
             </div>
             <h1 className={headingBadgeClass}>{roleLabel} Login</h1>

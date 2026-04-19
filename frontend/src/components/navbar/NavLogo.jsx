@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import logoSvg from "../../../src/logo.svg";
+import nestDosthuLogo from "../../assets/nest-dosthu-logo.jpeg";
 import { useAppSettings } from "../../contexts/AppSettingsContext";
 
 const NavLogo = () => {
@@ -9,38 +9,33 @@ const NavLogo = () => {
   return (
     <Link
       to="/"
-      className="group flex items-center space-x-3 px-2 py-1 rounded-lg hover:bg-neutral-50 transition-all duration-300 shrink-0 dark-logo-shell"
-      aria-label="Smart Rent System - Home"
+      className="group flex items-center gap-3 rounded-2xl px-2 py-1.5 transition-all duration-300 shrink-0 dark-logo-shell"
+      aria-label="Nest Dosthu - Home"
     >
-      {/* Logo Container with Hover Effect */}
-      <div className="relative shrink-0">
-        <div className="absolute inset-0 bg-red-500/10 rounded-full scale-110 group-hover:scale-125 transition-transform duration-300 ease-out" />
+      <div className="relative shrink-0 overflow-hidden rounded-[20px] border border-amber-300/35 bg-[#12070a] p-1.5 shadow-[0_10px_30px_rgba(18,7,10,0.22)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-[1.02]">
         <img
-          src={logoSvg}
-          alt="Smart Rent Logo"
-          className={`relative h-10 w-10 md:h-12 md:w-12 object-contain transform group-hover:scale-105 transition-transform duration-300 ${theme === "dark" ? "dark-logo-mark" : ""}`}
+          src={nestDosthuLogo}
+          alt="Nest Dosthu logo"
+          className={`relative h-11 w-11 rounded-2xl object-cover md:h-14 md:w-14 ${theme === "dark" ? "dark-logo-mark" : ""}`}
         />
       </div>
 
-      {/* Brand Text */}
       <div className="flex flex-col">
-        <div>
-          <span
-            className={`text-lg md:text-2xl font-bold transition-colors duration-300 ${
-              theme === "dark"
-                ? "text-white"
-                : "text-neutral-900 group-hover:text-red-600"
-            }`}
-          >
-            Smart Rent
-          </span>
-        </div>
         <span
-          className={`text-xs md:text-sm font-semibold tracking-wider transform group-hover:translate-x-1 transition-transform duration-300 ${
-            theme === "dark" ? "text-red-200" : "text-red-500"
+          className={`text-lg font-bold leading-tight transition-colors duration-300 md:text-2xl ${
+            theme === "dark"
+              ? "text-white"
+              : "text-neutral-900 group-hover:text-amber-700"
           }`}
         >
-          SYSTEM
+          Nest Dosthu
+        </span>
+        <span
+          className={`text-[11px] font-semibold uppercase tracking-[0.28em] transition-transform duration-300 group-hover:translate-x-1 md:text-xs ${
+            theme === "dark" ? "text-amber-200" : "text-amber-600"
+          }`}
+        >
+          Find Your Nest
         </span>
       </div>
     </Link>
