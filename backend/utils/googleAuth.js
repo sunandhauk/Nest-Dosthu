@@ -5,6 +5,8 @@ const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_CALLBACK_PATH = "/auth/google/callback";
 const FRONTEND_GOOGLE_CALLBACK_PATH = "/auth/google/callback";
+const DEFAULT_PRODUCTION_BACKEND_URL = "https://nest-dosthu.onrender.com";
+const DEFAULT_PRODUCTION_FRONTEND_URL = "https://nest-dosthu.netlify.app";
 
 const normalizeRedirectUri = (value, expectedPath = GOOGLE_CALLBACK_PATH) => {
   if (!value) {
@@ -88,7 +90,7 @@ const resolveBackendBaseUrl = (req) => {
   }
 
   if (process.env.NODE_ENV === "production") {
-    return "https://nest-dosthu.onrender.com";
+    return DEFAULT_PRODUCTION_BACKEND_URL;
   }
 
   if (req) {
@@ -149,7 +151,7 @@ const resolveFrontendRedirectUri = (redirectUri) => {
   }
 
   if (process.env.NODE_ENV === "production") {
-    return null;
+    return `${DEFAULT_PRODUCTION_FRONTEND_URL}${FRONTEND_GOOGLE_CALLBACK_PATH}`;
   }
 
   return `http://localhost:3000${FRONTEND_GOOGLE_CALLBACK_PATH}`;
