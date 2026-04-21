@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 
 // Load environment variables
 dotenv.config();
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
 const app = express();
 app.set("trust proxy", 1);
@@ -72,9 +73,11 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+
 // MongoDB Connection with better error handling
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(mongoUri)
   .then(() => {
     console.log("MongoDB Connected Successfully");
   })

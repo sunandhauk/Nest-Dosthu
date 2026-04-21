@@ -178,7 +178,7 @@ const sampleProperties = [
 
 async function seedChennaiProperties() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
     console.log("MongoDB connected for Chennai property seeding");
 
     let host = await User.findOne({ email: "host@smartrent.com" });
