@@ -11,7 +11,14 @@ const {
 const { cloudinary } = require("../cloudConfig");
 const crypto = require("crypto");
 const { sendPasswordResetEmail } = require("../services/emailService");
-const { exchangeCodeForGoogleProfile } = require("../utils/googleAuth");
+const {
+  buildFrontendCallbackRedirect,
+  buildGoogleAuthorizationUrl,
+  decodeGoogleAuthState,
+  exchangeCodeForGoogleProfile,
+  getGoogleCallbackUrl,
+  resolveFrontendRedirectUri,
+} = require("../utils/googleAuth");
 
 const buildAuthResponse = (user, accessToken) => ({
   _id: user._id,
@@ -196,6 +203,119 @@ const getDemoHostUser = async (req, res) => {
   }
 };
 
+const findOrCreateGoogleUser = async (googleProfile, role) => {
+  if (!googleProfile?.id || !googleProfile?.email) {
+    throw new Error("Google account data is incomplete");
+  }
+
+  if (googleProfile.verified_email === false) {
+    throw new Error("Google email is not verified");
+  }
+
+  const requestedRole = normalizeRequestedRole(role);
+  const firstName =
+    googleProfile.given_name ||
+    googleProfile.name?.split(" ").filter(Boolean)[0] ||
+    "Google";
+  const lastName =
+    googleProfile.family_name ||
+    googleProfile.name?.split(" ").slice(1).join(" ") ||
+    "User";
+
+  let user = await User.findOne({
+    $or: [
+      { googleId: googleProfile.id },
+      { email: googleProfile.email.toLowerCase() },
+    ],
+  });
+
+  if (!user) {
+    const username = await generateUniqueUsername(
+      googleProfile.email,
+      firstName,
+      lastName
+    );
+
+    user = await User.create({
+      username,
+      email: googleProfile.email.toLowerCase(),
+      password: crypto.randomBytes(32).toString("hex"),
+      firstName,
+      lastName,
+      role: requestedRole,
+      authProvider: "google",
+      googleId: googleProfile.id,
+      profileImage: googleProfile.picture,
+    });
+
+    return user;
+  }
+
+  let needsSave = false;
+
+  if (!user.googleId) {
+    user.googleId = googleProfile.id;
+    needsSave = true;
+  }
+
+  if (user.authProvider !== "google") {
+    user.authProvider = "google";
+    needsSave = true;
+  }
+
+  if (
+    requestedRole === "host" &&
+    user.role !== "admin" &&
+    user.role !== "host"
+  ) {
+    user.role = "host";
+    needsSave = true;
+  }
+
+  if (!user.profileImage && googleProfile.picture) {
+    user.profileImage = googleProfile.picture;
+    needsSave = true;
+  }
+
+  if (!user.firstName && firstName) {
+    user.firstName = firstName;
+    needsSave = true;
+  }
+
+  if (!user.lastName && lastName) {
+    user.lastName = lastName;
+    needsSave = true;
+  }
+
+  if (needsSave) {
+    await user.save();
+  }
+
+  return user;
+};
+
+const completeGoogleLogin = async ({ code, redirectUri, role, res }) => {
+  const googleProfile = await exchangeCodeForGoogleProfile({
+    code,
+    redirectUri,
+  });
+
+  const user = await findOrCreateGoogleUser(googleProfile, role);
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  setRefreshTokenCookie(res, refreshToken);
+
+  return buildAuthResponse(user, accessToken);
+};
+
+const getGoogleAuthErrorMessage = (error) =>
+  error.response?.data?.error_description ||
+  error.response?.data?.error ||
+  error.response?.data?.message ||
+  error.message ||
+  "Google authentication failed";
+
 const googleAuth = async (req, res) => {
   try {
     const { code, redirectUri, role } = req.body;
@@ -206,118 +326,91 @@ const googleAuth = async (req, res) => {
       });
     }
 
-    const requestedRole = normalizeRequestedRole(role);
-
-    const googleProfile = await exchangeCodeForGoogleProfile({
+    const authResponse = await completeGoogleLogin({
       code,
       redirectUri,
+      role,
+      res,
     });
 
-    if (!googleProfile?.id || !googleProfile?.email) {
-      return res
-        .status(400)
-        .json({ message: "Google account data is incomplete" });
-    }
-
-    if (googleProfile.verified_email === false) {
-      return res.status(400).json({ message: "Google email is not verified" });
-    }
-
-    const firstName =
-      googleProfile.given_name ||
-      googleProfile.name?.split(" ").filter(Boolean)[0] ||
-      "Google";
-    const lastName =
-      googleProfile.family_name ||
-      googleProfile.name?.split(" ").slice(1).join(" ") ||
-      "User";
-
-    let user = await User.findOne({
-      $or: [
-        { googleId: googleProfile.id },
-        { email: googleProfile.email.toLowerCase() },
-      ],
-    });
-
-    if (!user) {
-      const username = await generateUniqueUsername(
-        googleProfile.email,
-        firstName,
-        lastName
-      );
-
-      user = await User.create({
-        username,
-        email: googleProfile.email.toLowerCase(),
-        password: crypto.randomBytes(32).toString("hex"),
-        firstName,
-        lastName,
-        role: requestedRole,
-        authProvider: "google",
-        googleId: googleProfile.id,
-        profileImage: googleProfile.picture,
-      });
-    } else {
-      let needsSave = false;
-
-      if (!user.googleId) {
-        user.googleId = googleProfile.id;
-        needsSave = true;
-      }
-
-      if (user.authProvider !== "google") {
-        user.authProvider = "google";
-        needsSave = true;
-      }
-
-      if (
-        requestedRole === "host" &&
-        user.role !== "admin" &&
-        user.role !== "host"
-      ) {
-        user.role = "host";
-        needsSave = true;
-      }
-
-      if (!user.profileImage && googleProfile.picture) {
-        user.profileImage = googleProfile.picture;
-        needsSave = true;
-      }
-
-      if (!user.firstName && firstName) {
-        user.firstName = firstName;
-        needsSave = true;
-      }
-
-      if (!user.lastName && lastName) {
-        user.lastName = lastName;
-        needsSave = true;
-      }
-
-      if (needsSave) {
-        await user.save();
-      }
-    }
-
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
-
-    setRefreshTokenCookie(res, refreshToken);
-
-    res.status(200).json(buildAuthResponse(user, accessToken));
+    res.status(200).json(authResponse);
   } catch (error) {
     const isAxiosError = axios.isAxiosError(error);
-    const providerMessage =
-      error.response?.data?.error_description ||
-      error.response?.data?.error ||
-      error.response?.data?.message;
-    const message = providerMessage || error.message || "Google authentication failed";
+    const message = getGoogleAuthErrorMessage(error);
 
     console.error(
       "Google auth error:",
       error.response?.data || error.message || error
     );
     res.status(isAxiosError ? 400 : 500).json({ message });
+  }
+};
+
+const startGoogleAuth = async (req, res) => {
+  try {
+    const authUrl = buildGoogleAuthorizationUrl({
+      req,
+      frontendRedirectUri:
+        req.query.frontend_redirect || req.query.redirect_uri || req.query.redirectUri,
+      role: req.query.role,
+    });
+
+    res.redirect(authUrl);
+  } catch (error) {
+    console.error("Google auth start error:", error.message || error);
+    res.status(400).json({ message: error.message || "Google authentication failed" });
+  }
+};
+
+const googleAuthCallback = async (req, res) => {
+  const statePayload = decodeGoogleAuthState(req.query.state);
+  const frontendRedirectUri = resolveFrontendRedirectUri(
+    statePayload?.frontendRedirectUri
+  );
+
+  if (!frontendRedirectUri) {
+    return res.status(400).json({
+      message:
+        "Frontend redirect URL is missing or invalid for Google authentication.",
+    });
+  }
+
+  if (req.query.error) {
+    const errorRedirectUrl = buildFrontendCallbackRedirect({
+      frontendRedirectUri,
+      error: req.query.error,
+      errorDescription: req.query.error_description,
+    });
+
+    return res.redirect(errorRedirectUrl);
+  }
+
+  try {
+    await completeGoogleLogin({
+      code: req.query.code,
+      redirectUri: getGoogleCallbackUrl(req),
+      role: statePayload?.role,
+      res,
+    });
+
+    const successRedirectUrl = buildFrontendCallbackRedirect({
+      frontendRedirectUri,
+      status: "success",
+    });
+
+    return res.redirect(successRedirectUrl);
+  } catch (error) {
+    const errorRedirectUrl = buildFrontendCallbackRedirect({
+      frontendRedirectUri,
+      error: "google_auth_failed",
+      errorDescription: getGoogleAuthErrorMessage(error),
+    });
+
+    console.error(
+      "Google callback error:",
+      error.response?.data || error.message || error
+    );
+    return res.redirect(errorRedirectUrl);
   }
 };
 
@@ -751,4 +844,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   googleAuth,
+  googleAuthCallback,
+  startGoogleAuth,
 };

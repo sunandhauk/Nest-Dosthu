@@ -1,11 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import {
-  consumeGoogleAuthRole,
-  getGoogleRedirectUri,
-  validateGoogleAuthState,
-} from "../utils/googleAuth";
+import { getGoogleRedirectUri } from "../utils/googleAuth";
 
 const getHelpfulGoogleAuthError = (message) => {
   if (!message) {
@@ -44,7 +40,7 @@ const getProviderErrorMessage = (providerError, providerErrorDescription) => {
 
 const GoogleAuthCallback = () => {
   const navigate = useNavigate();
-  const { googleAuth } = useAuth();
+  const { completeOAuthRedirectLogin, googleAuth } = useAuth();
   const [error, setError] = useState("");
   const hasProcessedAuth = useRef(false);
 
@@ -58,10 +54,9 @@ const GoogleAuthCallback = () => {
     const completeGoogleAuth = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
+      const status = params.get("status");
       const providerError = params.get("error");
       const providerErrorDescription = params.get("error_description");
-      const state = params.get("state");
-      const role = consumeGoogleAuthRole();
 
       if (providerError) {
         setError(
@@ -70,10 +65,15 @@ const GoogleAuthCallback = () => {
         return;
       }
 
-      if (!validateGoogleAuthState(state)) {
-        setError(
-          `Google sign-in could not be verified. Please retry from the same site origin. Current callback URI: "${getGoogleRedirectUri()}".`
-        );
+      if (status === "success") {
+        const result = await completeOAuthRedirectLogin();
+
+        if (result.success) {
+          navigate("/", { replace: true });
+          return;
+        }
+
+        setError(getHelpfulGoogleAuthError(result.error));
         return;
       }
 
@@ -82,7 +82,7 @@ const GoogleAuthCallback = () => {
         return;
       }
 
-      const result = await googleAuth(code, getGoogleRedirectUri(), role);
+      const result = await googleAuth(code, getGoogleRedirectUri(), "user");
 
       if (result.success) {
         navigate("/", { replace: true });
@@ -93,7 +93,7 @@ const GoogleAuthCallback = () => {
     };
 
     completeGoogleAuth();
-  }, [googleAuth, navigate]);
+  }, [completeOAuthRedirectLogin, googleAuth, navigate]);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">

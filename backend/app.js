@@ -10,6 +10,7 @@ const cookieParser = require("cookie-parser");
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1);
 
 const isAllowedLocalDevelopmentOrigin = (origin) => {
   if (!origin) {
@@ -96,6 +97,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Routes
+app.use("/", require("./routes/authRoutes"));
 app.use("/api/properties", require("./routes/propertyRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api", require("./routes/indexRoutes"));

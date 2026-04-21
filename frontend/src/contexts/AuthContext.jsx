@@ -12,6 +12,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const applyAuthenticatedUser = (authData) => {
+    if (authData && authData.token) {
+      setAccessToken(authData.token);
+      setCurrentUser({
+        _id: authData._id,
+        username: authData.username,
+        email: authData.email,
+        firstName: authData.firstName,
+        lastName: authData.lastName,
+        role: authData.role,
+        profileImage: authData.profileImage,
+        phone: authData.phone || "",
+        referralCode: authData.referralCode || "",
+      });
+      return true;
+    }
+
+    setAccessToken(null);
+    setCurrentUser(null);
+    return false;
+  };
+
   useEffect(() => {
     // Check if user is already logged in via refresh token in cookie
     const checkLoggedIn = async () => {
@@ -19,19 +41,7 @@ export function AuthProvider({ children }) {
         // Attempt to refresh token on mount
         const res = await api.post("/api/users/refresh");
 
-        if (res.data && res.data.token) {
-          setAccessToken(res.data.token);
-          setCurrentUser({
-            _id: res.data._id,
-            username: res.data.username,
-            email: res.data.email,
-            firstName: res.data.firstName,
-            lastName: res.data.lastName,
-            role: res.data.role,
-            profileImage: res.data.profileImage,
-            phone: res.data.phone || "",
-            referralCode: res.data.referralCode || "",
-          });
+        if (applyAuthenticatedUser(res.data)) {
           console.log("User session restored via refresh token");
         }
       } catch (err) {
@@ -57,20 +67,7 @@ export function AuthProvider({ children }) {
       const res = await api.post("/api/users/register", userData);
       console.log("Registration response:", res.data);
 
-      if (res.data && res.data.token) {
-        setAccessToken(res.data.token);
-        setCurrentUser({
-          _id: res.data._id,
-          username: res.data.username,
-          email: res.data.email,
-          firstName: res.data.firstName,
-          lastName: res.data.lastName,
-          role: res.data.role,
-          profileImage: res.data.profileImage,
-          phone: res.data.phone || "",
-          referralCode: res.data.referralCode || "",
-        });
-      }
+      applyAuthenticatedUser(res.data);
 
       return { success: true, data: res.data };
     } catch (err) {
@@ -92,20 +89,7 @@ export function AuthProvider({ children }) {
       const res = await api.post("/api/users/login", { email, password });
       console.log("Login response:", res.data);
 
-      if (res.data && res.data.token) {
-        setAccessToken(res.data.token);
-        setCurrentUser({
-          _id: res.data._id,
-          username: res.data.username,
-          email: res.data.email,
-          firstName: res.data.firstName,
-          lastName: res.data.lastName,
-          role: res.data.role,
-          profileImage: res.data.profileImage,
-          phone: res.data.phone || "",
-          referralCode: res.data.referralCode || "",
-        });
-      }
+      applyAuthenticatedUser(res.data);
 
       return { success: true, data: res.data };
     } catch (err) {
@@ -122,29 +106,31 @@ export function AuthProvider({ children }) {
 
       const res = await api.post("/api/users/google", { code, redirectUri, role });
 
-      if (res.data && res.data.token) {
-        setAccessToken(res.data.token);
-        setCurrentUser({
-          _id: res.data._id,
-          username: res.data.username,
-          email: res.data.email,
-          firstName: res.data.firstName,
-          lastName: res.data.lastName,
-          role: res.data.role,
-          profileImage: res.data.profileImage,
-          phone: res.data.phone || "",
-          referralCode: res.data.referralCode || "",
-        });
-      } else {
-        setAccessToken(null);
-        setCurrentUser(null);
-      }
+      applyAuthenticatedUser(res.data);
 
       return { success: true, data: res.data };
     } catch (err) {
       console.error("Google auth error:", err);
       const errorMessage =
         err.response?.data?.message || "Google sign-in failed";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const completeOAuthRedirectLogin = async () => {
+    try {
+      setError("");
+      const res = await api.post("/api/users/refresh");
+
+      if (!applyAuthenticatedUser(res.data)) {
+        return { success: false, error: "Unable to restore Google session." };
+      }
+
+      return { success: true, data: res.data };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || "Unable to restore Google session.";
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -316,6 +302,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     socialLogin,
     googleAuth,
+    completeOAuthRedirectLogin,
     updateProfileImage,
     removeProfileImage,
     isAuthenticated: !!currentUser,
