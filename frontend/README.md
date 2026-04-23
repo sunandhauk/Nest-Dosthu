@@ -12,7 +12,7 @@ React-based frontend for Smart Rent System, a property rental management platfor
 
 ```bash
 npm install
-npm start          # Development server on https://nest-dosthu.onrender.com
+npm start          # Development server
 npm run build      # Build for production
 npm run dev        # Start development mode
 ```

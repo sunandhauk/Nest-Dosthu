@@ -211,7 +211,7 @@ PORT=8000
 NODE_ENV=development
 
 # Database
-MONGODB_URI=https://nest-dosthu.onrender.com/smartrent
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/smartrent
 
 # Authentication
 JWT_SECRET=your_super_secret_jwt_key_change_in_production
@@ -262,9 +262,9 @@ npm run dev
 
 **5. Access the Application**
 
-Open your browser and navigate to:
+Open your browser and navigate to your frontend URL, for example:
 ```
-https://nest-dosthu.onrender.com
+https://nest-dosthu.netlify.app
 ```
 
 🎉 **Congratulations!** Smart-Rent is now running locally.
@@ -407,17 +407,17 @@ Once the containers are running:
 
 **Frontend:**
 ```
-https://nest-dosthu.onrender.com
+https://nest-dosthu.netlify.app
 ```
 
 **Backend API:** 
 ```
-https://nest-dosthu.onrender.com
+https://nest-dosthu.netlify.app
 ```
 
 **MongoDB:**
 ```
-https://nest-dosthu.onrender.com
+mongodb://mongodb:27017
 ```
 
 ### 🛑 Stopping the Application

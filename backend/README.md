@@ -33,7 +33,7 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-password
-FRONTEND_URL=https://nest-dosthu.onrender.com
+FRONTEND_URL=https://nest-dosthu.netlify.app
 ```
 
 ## Features
