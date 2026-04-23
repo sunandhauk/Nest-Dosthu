@@ -30,36 +30,9 @@ const normalizeRedirectUri = (value, expectedPath = GOOGLE_CALLBACK_PATH) => {
 const normalizeFrontendRedirectUri = (value) =>
   normalizeRedirectUri(value, FRONTEND_GOOGLE_CALLBACK_PATH);
 
-const isLocalDevelopmentOrigin = (origin) => {
-  try {
-    const parsedUrl = new URL(origin);
-    const { protocol, hostname } = parsedUrl;
-
-    if (protocol !== "http:") {
-      return false;
-    }
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return true;
-    }
-
-    return (
-      /^10\./.test(hostname) ||
-      /^192\.168\./.test(hostname) ||
-      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
-    );
-  } catch (error) {
-    return false;
-  }
-};
-
 const isAllowedFrontendOrigin = (origin) => {
   try {
     const parsedUrl = new URL(origin);
-
-    if (isLocalDevelopmentOrigin(origin)) {
-      return true;
-    }
 
     if (
       parsedUrl.protocol === "https:" &&
@@ -97,7 +70,7 @@ const resolveBackendBaseUrl = (req) => {
     return `${req.protocol}://${req.get("host")}`;
   }
 
-  return "http://localhost:8000";
+  return DEFAULT_PRODUCTION_BACKEND_URL;
 };
 
 const getGoogleCallbackUrl = (req) =>
@@ -154,7 +127,7 @@ const resolveFrontendRedirectUri = (redirectUri) => {
     return `${DEFAULT_PRODUCTION_FRONTEND_URL}${FRONTEND_GOOGLE_CALLBACK_PATH}`;
   }
 
-  return `http://localhost:3000${FRONTEND_GOOGLE_CALLBACK_PATH}`;
+  return `${DEFAULT_PRODUCTION_FRONTEND_URL}${FRONTEND_GOOGLE_CALLBACK_PATH}`;
 };
 
 const validateRequestedRedirectUri = (redirectUri) => {
@@ -167,13 +140,6 @@ const validateRequestedRedirectUri = (redirectUri) => {
   const configuredRedirectUris = getConfiguredRedirectUris();
 
   if (configuredRedirectUris.has(normalizedRedirectUri)) {
-    return normalizedRedirectUri;
-  }
-
-  if (
-    process.env.NODE_ENV !== "production" &&
-    isLocalDevelopmentOrigin(new URL(normalizedRedirectUri).origin)
-  ) {
     return normalizedRedirectUri;
   }
 

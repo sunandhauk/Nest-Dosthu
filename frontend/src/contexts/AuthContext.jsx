@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api, { setAccessToken } from "../config/api";
+import { startGoogleAuth, getGoogleRedirectUri } from "../utils/googleAuth";
 
 const AuthContext = createContext();
 
@@ -248,42 +249,35 @@ export function AuthProvider({ children }) {
 
   // Social login (Google, Facebook)
   const socialLogin = async (provider) => {
-    // Note: Social login normally handles redirections, so we don't change logic here
-    // but the backend will need to set the refreshToken cookie on callback
     try {
       setError("");
-      const redirectUri = window.location.origin + `/auth/${provider}/callback`;
-
-      let authUrl = "";
-      let params = {};
 
       if (provider === "google") {
-        authUrl = "https://accounts.google.com/o/oauth2/v2/auth";
-        params = {
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id",
-          redirect_uri: redirectUri,
-          response_type: "code",
-          scope: "email profile",
-          prompt: "select_account",
-        };
-      } else if (provider === "facebook") {
-        authUrl = "https://www.facebook.com/v12.0/dialog/oauth";
-        params = {
-          client_id: process.env.REACT_APP_FACEBOOK_APP_ID || "your-facebook-app-id",
+        startGoogleAuth({ role: "user" });
+        return { success: true };
+      }
+
+      if (provider === "facebook") {
+        const redirectUri = `${window.location.origin}/auth/facebook/callback`;
+        const authUrl = "https://www.facebook.com/v12.0/dialog/oauth";
+        const params = {
+          client_id:
+            process.env.REACT_APP_FACEBOOK_APP_ID || "your-facebook-app-id",
           redirect_uri: redirectUri,
           response_type: "code",
           scope: "email,public_profile",
         };
-      }
-
-      if (authUrl) {
         const queryString = new URLSearchParams(params).toString();
         window.location.href = `${authUrl}?${queryString}`;
+        return { success: true };
       }
 
-      return { success: true };
+      return { success: false, error: `${provider} login is not supported.` };
     } catch (err) {
-      const errorMessage = `${provider} login failed`;
+      const errorMessage =
+        provider === "google"
+          ? `Google login failed. Please make sure the redirect URI matches "${getGoogleRedirectUri()}".`
+          : `${provider} login failed`;
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }

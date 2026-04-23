@@ -52,7 +52,7 @@ Follow these steps to get the project running on your local machine.
     npm start
     ```
 
-The frontend should now be running at `http://localhost:3000` and the backend at `http://localhost:8000`.
+The frontend should now be running at `https://nest-dosthu.onrender.com` and the backend at `https://nest-dosthu.onrender.com`.
 
 ## 3. Branching Strategy
 

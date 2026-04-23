@@ -12,7 +12,7 @@ React-based frontend for Smart Rent System, a property rental management platfor
 
 ```bash
 npm install
-npm start          # Development server on http://localhost:3000
+npm start          # Development server on https://nest-dosthu.onrender.com
 npm run build      # Build for production
 npm run dev        # Start development mode
 ```
@@ -22,8 +22,8 @@ npm run dev        # Start development mode
 Create `.env` file in the frontend directory:
 
 ```env
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_BACKEND_URL=http://localhost:8000
+REACT_APP_API_URL=https://nest-dosthu.onrender.com
+REACT_APP_BACKEND_URL=https://nest-dosthu.onrender.com
 REACT_APP_TAWK_PROPERTY_ID=your_tawk_property_id
 REACT_APP_TAWK_WIDGET_ID=your_tawk_widget_id
 ```
@@ -86,7 +86,7 @@ frontend/src/
 
 ## API Integration
 
-Frontend communicates with backend API at `http://localhost:8000`:
+Frontend communicates with backend API at `https://nest-dosthu.onrender.com`:
 
 ### Key Endpoints Used
 

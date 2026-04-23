@@ -13,7 +13,7 @@ const getApiUrl = () => {
   }
 
   // Development fallback
-  return process.env.REACT_APP_API_URL || "http://localhost:8000";
+  return process.env.REACT_APP_API_URL || "https://nest-dosthu.onrender.com";
 };
 
 

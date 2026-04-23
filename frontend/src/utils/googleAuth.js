@@ -10,28 +10,21 @@ const getApiBaseUrl = () => {
     return DEFAULT_PRODUCTION_API_URL;
   }
 
-  return process.env.REACT_APP_API_URL || "http://localhost:8000";
+  return process.env.REACT_APP_API_URL || DEFAULT_PRODUCTION_API_URL;
 };
 
 export const getGoogleRedirectUri = () => {
   const configuredRedirectUri = process.env.REACT_APP_GOOGLE_REDIRECT_URI;
 
   if (typeof window === "undefined") {
-    if (process.env.NODE_ENV === "production") {
-      return `https://nest-dosthu.netlify.app${GOOGLE_CALLBACK_PATH}`;
-    }
-
-    return configuredRedirectUri || `http://localhost:3000${GOOGLE_CALLBACK_PATH}`;
+    return configuredRedirectUri || `https://nest-dosthu.netlify.app${GOOGLE_CALLBACK_PATH}`;
   }
 
   // Prefer the explicitly configured redirect URI when present so the frontend,
   // backend, and Google Console all use the exact same callback URL.
   if (
     configuredRedirectUri &&
-    !(
-      process.env.NODE_ENV === "production" &&
-      configuredRedirectUri.includes("localhost")
-    )
+    !process.env.NODE_ENV || process.env.NODE_ENV !== "production"
   ) {
     return configuredRedirectUri;
   }
@@ -40,7 +33,7 @@ export const getGoogleRedirectUri = () => {
     return `https://nest-dosthu.netlify.app${GOOGLE_CALLBACK_PATH}`;
   }
 
-  return `${window.location.origin}${GOOGLE_CALLBACK_PATH}`;
+  return configuredRedirectUri || `${window.location.origin}${GOOGLE_CALLBACK_PATH}`;
 };
 
 export const startGoogleAuth = ({ role } = {}) => {

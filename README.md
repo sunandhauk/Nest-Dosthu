@@ -211,7 +211,7 @@ PORT=8000
 NODE_ENV=development
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/smartrent
+MONGODB_URI=https://nest-dosthu.onrender.com/smartrent
 
 # Authentication
 JWT_SECRET=your_super_secret_jwt_key_change_in_production
@@ -225,7 +225,7 @@ CLOUDINARY_SECRET=your_api_secret
 # Google OAuth (Optional)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+GOOGLE_REDIRECT_URI=https://nest-dosthu.onrender.com/auth/google/callback
 ```
 
 **3. Frontend Setup**
@@ -238,10 +238,10 @@ npm install
 Create `.env` file in the `frontend` directory:
 
 ```env
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_SOCKET_URL=http://localhost:8000
+REACT_APP_API_URL=https://nest-dosthu.onrender.com
+REACT_APP_SOCKET_URL=https://nest-dosthu.onrender.com
 REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id
-REACT_APP_GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+REACT_APP_GOOGLE_REDIRECT_URI=https://nest-dosthu.netlify.app/auth/google/callback
 ```
 
 Make sure the Google Cloud Console OAuth redirect URI matches both `GOOGLE_REDIRECT_URI` and `REACT_APP_GOOGLE_REDIRECT_URI`.
@@ -264,7 +264,7 @@ npm run dev
 
 Open your browser and navigate to:
 ```
-http://localhost:3000
+https://nest-dosthu.onrender.com
 ```
 
 🎉 **Congratulations!** Smart-Rent is now running locally.
@@ -322,7 +322,7 @@ Smart-Rent/
 
 Once the backend is running, access API documentation at:
 ```
-http://localhost:8000/api-docs
+https://nest-dosthu.onrender.com/api-docs
 ```
 
 ---
@@ -383,7 +383,7 @@ JWT_SECRET=your_jwt_secret_here
 # RESEND_API_KEY=your_resend_key_here
 
 # Frontend
-REACT_APP_API_URL=http://localhost:8000
+REACT_APP_API_URL=https://nest-dosthu.onrender.com
 ```
 
 ### 🚀 Running the Application with Docker
@@ -407,17 +407,17 @@ Once the containers are running:
 
 **Frontend:**
 ```
-http://localhost:3000
+https://nest-dosthu.onrender.com
 ```
 
 **Backend API:** 
 ```
-http://localhost:8000
+https://nest-dosthu.onrender.com
 ```
 
 **MongoDB:**
 ```
-mongodb://localhost:27017
+https://nest-dosthu.onrender.com
 ```
 
 ### 🛑 Stopping the Application
