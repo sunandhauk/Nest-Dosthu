@@ -186,7 +186,8 @@ const buildGoogleAuthorizationUrl = ({ req, frontendRedirectUri, role }) => {
     redirect_uri: getGoogleCallbackUrl(req),
     response_type: "code",
     scope: "openid email profile",
-    prompt: "select_account",
+    prompt: "consent",
+    access_type: "offline",
     state,
   });
 
