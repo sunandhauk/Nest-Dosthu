@@ -1,24 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, User, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CHENNAI_AREAS } from "../utils/chennaiListings";
 import { useAppSettings } from "../contexts/AppSettingsContext";
-
-const heroImages = [
-  {
-    url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1950&q=80",
-    alt: "Comfortable room interior",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1950&q=80",
-    alt: "Modern hostel room",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1950&q=80",
-    alt: "Bright shared room",
-  },
-];
 
 const heroQuotes = [
   {
@@ -142,32 +127,102 @@ const Home = () => {
   const navigate = useNavigate();
   const { theme } = useAppSettings();
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showEntryPopup, setShowEntryPopup] = useState(false);
+  const heroSectionRef = useRef(null);
+  const vantaEffectRef = useRef(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setCurrentIndex((prev) => (prev + 1) % heroImages.length);
-      setTimeout(() => setIsTransitioning(false), 650);
-    }, 3600);
-
-    return () => clearInterval(interval);
+    const dismissed = sessionStorage.getItem("entryRoleChoiceDismissed");
+    if (!dismissed) {
+      setShowEntryPopup(true);
+    }
   }, []);
 
-  const nextSlide = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev + 1) % heroImages.length);
-    setTimeout(() => setIsTransitioning(false), 650);
-  };
+  useEffect(() => {
+    let isCancelled = false;
 
-  const prevSlide = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
-    setTimeout(() => setIsTransitioning(false), 650);
-  };
+    const loadScript = (src) =>
+      new Promise((resolve, reject) => {
+        const existingScript = document.querySelector(`script[src="${src}"]`);
+
+        if (existingScript) {
+          if (existingScript.dataset.loaded === "true") {
+            resolve();
+            return;
+          }
+
+          existingScript.addEventListener("load", resolve, { once: true });
+          existingScript.addEventListener(
+            "error",
+            () => reject(new Error(`Failed to load script: ${src}`)),
+            { once: true }
+          );
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = src;
+        script.async = true;
+        script.addEventListener("load", () => {
+          script.dataset.loaded = "true";
+          resolve();
+        });
+        script.addEventListener(
+          "error",
+          () => reject(new Error(`Failed to load script: ${src}`)),
+          { once: true }
+        );
+        document.body.appendChild(script);
+      });
+
+    const initializeVanta = async () => {
+      if (!heroSectionRef.current) {
+        return;
+      }
+
+      try {
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"
+        );
+        await loadScript(
+          "https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"
+        );
+
+        if (isCancelled || !window.VANTA?.NET || !heroSectionRef.current) {
+          return;
+        }
+
+        if (vantaEffectRef.current?.destroy) {
+          vantaEffectRef.current.destroy();
+        }
+
+        vantaEffectRef.current = window.VANTA.NET({
+          el: heroSectionRef.current,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200,
+          minWidth: 200,
+          scale: 1,
+          scaleMobile: 1,
+          color: 0xff3f3f,
+          backgroundColor: 0x3c1522,
+        });
+      } catch (error) {
+        console.error("Vanta background failed to initialize:", error);
+      }
+    };
+
+    initializeVanta();
+
+    return () => {
+      isCancelled = true;
+      if (vantaEffectRef.current?.destroy) {
+        vantaEffectRef.current.destroy();
+        vantaEffectRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -179,6 +234,21 @@ const Home = () => {
     );
   };
 
+  const closeEntryPopup = () => {
+    sessionStorage.setItem("entryRoleChoiceDismissed", "true");
+    setShowEntryPopup(false);
+  };
+
+  const continueAsHost = () => {
+    closeEntryPopup();
+    navigate("/host/become-a-host");
+  };
+
+  const continueAsTenant = () => {
+    closeEntryPopup();
+    navigate("/listings?location=Chennai");
+  };
+
   return (
     <div
       className={`transition-colors duration-500 ${
@@ -187,8 +257,9 @@ const Home = () => {
           : "bg-[linear-gradient(180deg,_#ffe0d2_0%,_#ffedd5_24%,_#ffc7b6_62%,_#fff1e6_100%)]"
       }`}
     >
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.18),_transparent_28%)]" />
+      <section ref={heroSectionRef} className="relative min-h-screen overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(60,21,34,0.76)_0%,_rgba(32,14,32,0.66)_48%,_rgba(15,23,42,0.72)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.18),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.14),_transparent_28%)]" />
         <motion.div
           animate={{ y: [0, -18, 0], x: [0, 10, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -200,25 +271,9 @@ const Home = () => {
           className="absolute right-[-5rem] top-32 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl"
         />
 
-        <div className="relative h-[640px] overflow-hidden">
-          {heroImages.map((image, index) => (
-            <motion.div
-              key={image.alt}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                index === currentIndex ? "opacity-100" : "opacity-0"
-              }`}
-              animate={{
-                scale: index === currentIndex ? 1.04 : 1,
-              }}
-              transition={{ duration: 3.2, ease: "easeOut" }}
-            >
-              <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-[linear-gradient(120deg,_rgba(15,23,42,0.78)_0%,_rgba(15,23,42,0.56)_42%,_rgba(15,23,42,0.34)_100%)]" />
-            </motion.div>
-          ))}
-
+        <div className="relative flex min-h-screen items-center overflow-hidden">
           <div className="absolute inset-0">
-            <div className="container mx-auto flex h-full items-center px-4">
+            <div className="container mx-auto flex min-h-screen items-center px-4 py-20 sm:py-24">
               <motion.div
                 className="max-w-3xl text-white"
                 initial="hidden"
@@ -233,7 +288,7 @@ const Home = () => {
                     borderColor: "rgba(255,255,255,0.42)",
                     y: -2,
                   }}
-                  className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-rose-100 backdrop-blur"
+                  className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-100 backdrop-blur sm:px-4 sm:text-xs sm:tracking-[0.28em]"
                 >
                   Nest Dosthu System
                 </motion.span>
@@ -241,7 +296,7 @@ const Home = () => {
                   variants={headlineContainer}
                   initial="hidden"
                   animate="show"
-                  className="mt-6 max-w-4xl text-4xl font-bold leading-tight md:text-6xl"
+                  className="mt-5 max-w-4xl text-3xl font-bold leading-tight sm:text-4xl md:mt-6 md:text-6xl"
                 >
                   {heroHeadlineWords.map((word) => (
                     <motion.span
@@ -261,11 +316,11 @@ const Home = () => {
                     backgroundColor: "rgba(255,255,255,0.16)",
                     borderColor: "rgba(255,255,255,0.28)",
                   }}
-                  className="mt-5 min-h-[84px] max-w-3xl rounded-[24px] border border-white/15 bg-white/10 px-5 py-4 backdrop-blur transition duration-500"
+                  className="mt-4 min-h-[84px] max-w-3xl rounded-[22px] border border-white/15 bg-white/10 px-4 py-4 backdrop-blur transition duration-500 sm:mt-5 sm:rounded-[24px] sm:px-5"
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={`quote-${currentIndex}`}
+                      key="quote-primary"
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -16 }}
@@ -274,12 +329,12 @@ const Home = () => {
                       <motion.p
                         animate={{ backgroundPositionX: ["0%", "100%", "0%"] }}
                         transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                        className="bg-gradient-to-r from-rose-200 via-white to-sky-200 bg-[length:200%_100%] bg-clip-text text-lg font-semibold text-transparent md:text-2xl"
+                        className="bg-gradient-to-r from-rose-200 via-white to-sky-200 bg-[length:200%_100%] bg-clip-text text-base font-semibold text-transparent sm:text-lg md:text-2xl"
                       >
-                        {heroQuotes[currentIndex].lineOne}
+                        {heroQuotes[0].lineOne}
                       </motion.p>
                       <p className="mt-1 text-sm leading-6 text-slate-200 md:text-base">
-                        {heroQuotes[currentIndex].lineTwo}
+                        {heroQuotes[0].lineTwo}
                       </p>
                     </motion.div>
                   </AnimatePresence>
@@ -288,11 +343,11 @@ const Home = () => {
                 <motion.form
                   variants={fadeUp}
                   onSubmit={handleSearchSubmit}
-                  className="mt-8 flex max-w-2xl flex-col gap-3 rounded-[28px] border border-white/15 bg-white/12 p-3 backdrop-blur-md md:flex-row"
+                  className="mt-7 flex max-w-2xl flex-col gap-3 rounded-[24px] border border-white/15 bg-white/12 p-3 backdrop-blur-md sm:mt-8 sm:rounded-[28px] md:flex-row"
                 >
                   <motion.div
                     whileHover={{ backgroundColor: "#fff7f8" }}
-                    className="flex flex-1 items-center gap-3 rounded-[20px] bg-white px-4 py-4 text-neutral-700"
+                    className="flex flex-1 items-center gap-3 rounded-[18px] bg-white px-4 py-3.5 text-neutral-700 sm:rounded-[20px] sm:py-4"
                   >
                     <MapPin className="h-5 w-5 text-primary-600" />
                     <input
@@ -305,7 +360,7 @@ const Home = () => {
                   </motion.div>
                   <motion.button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-[20px] bg-rose-500 px-6 py-4 text-sm font-semibold text-white transition hover:bg-rose-600 md:text-base"
+                    className="inline-flex items-center justify-center gap-2 rounded-[18px] bg-rose-500 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-rose-600 sm:rounded-[20px] sm:py-4 md:text-base"
                     whileHover={{
                       y: -3,
                       scale: 1.02,
@@ -319,7 +374,7 @@ const Home = () => {
                   </motion.button>
                 </motion.form>
 
-                <motion.div variants={fadeUp} className="mt-6 flex flex-wrap gap-3 text-sm text-slate-100">
+                <motion.div variants={fadeUp} className="mt-5 flex flex-wrap gap-2.5 text-xs text-slate-100 sm:mt-6 sm:gap-3 sm:text-sm">
                   {[
                     "Tenant-first chat flow",
                     "Smooth property discovery",
@@ -332,7 +387,7 @@ const Home = () => {
                         backgroundColor: "rgba(255,255,255,0.18)",
                         color: "#ffffff",
                       }}
-                      className="rounded-full bg-white/10 px-4 py-2 backdrop-blur"
+                      className="rounded-full bg-white/10 px-3 py-2 backdrop-blur sm:px-4"
                     >
                       {tag}
                     </motion.span>
@@ -341,22 +396,80 @@ const Home = () => {
               </motion.div>
             </div>
           </div>
-
-          <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-            {heroImages.map((_, index) => (
-              <motion.button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`rounded-full transition-all duration-300 ${
-                  index === currentIndex ? "h-2 w-9 bg-white" : "h-2 w-2 bg-white/50"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-                whileHover={{ scale: 1.15 }}
-                whileTap={{ scale: 0.92 }}
-              />
-            ))}
-          </div>
         </div>
+
+        <AnimatePresence>
+          {showEntryPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-30 flex items-start justify-center bg-[rgba(22,16,24,0.56)] p-3 pt-20 backdrop-blur-sm sm:items-center sm:p-4 sm:pt-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 18, scale: 0.98 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="w-full max-w-3xl max-h-[calc(100vh-6rem)] overflow-y-auto rounded-[26px] border border-rose-200/60 bg-[linear-gradient(135deg,_rgba(255,243,238,0.96)_0%,_rgba(255,226,216,0.98)_42%,_rgba(255,205,188,0.96)_100%)] p-4 text-black shadow-[0_30px_90px_-30px_rgba(15,23,42,0.48)] md:p-6"
+              >
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
+                  <div className="max-w-xl">
+                    <span className="inline-flex rounded-full bg-white/55 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-rose-600 shadow-sm md:text-[11px]">
+                      Chennai rental flow
+                    </span>
+                    <h2 className="mt-3 text-xl font-bold leading-tight md:text-2xl lg:text-3xl">
+                      Continue as host or tenant
+                    </h2>
+                    <p className="mt-2.5 max-w-xl text-sm leading-6 text-neutral-800 md:text-[15px]">
+                      Continue as a tenant to browse rooms in Chennai, or continue as a host to publish your room with images, contact details, and pricing.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={closeEntryPopup}
+                    aria-label="Close role chooser"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-rose-300/80 bg-white/30 text-neutral-900 transition hover:bg-white/55"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <button
+                    onClick={continueAsHost}
+                    className="rounded-[22px] border border-rose-200 bg-[rgba(255,255,255,0.76)] p-4 text-left shadow-[0_18px_40px_-28px_rgba(15,23,42,0.4)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_-30px_rgba(225,29,72,0.28)] md:p-5"
+                  >
+                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                      <i className="fas fa-house-user text-lg" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-black md:text-xl">
+                      Continue as Host
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-neutral-800">
+                      Upload a Chennai room, add images, enter the required price and contact details, and publish your listing instantly.
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={continueAsTenant}
+                    className="rounded-[22px] border border-sky-200 bg-[rgba(255,255,255,0.76)] p-4 text-left shadow-[0_18px_40px_-28px_rgba(15,23,42,0.4)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_-30px_rgba(14,165,233,0.28)] md:p-5"
+                  >
+                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-black md:text-xl">
+                      Continue as Tenant
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-neutral-800">
+                      Browse rooms available in Chennai only, open the host contact and chat screen directly, and discuss details with the host.
+                    </p>
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       <motion.section
